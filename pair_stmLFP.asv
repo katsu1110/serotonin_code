@@ -92,25 +92,10 @@ if z
     for d = 1:2
         for i = 1:lenv    
             for n = 1:para.cond(d).ntr(i)
-                lfpall = [lfpall, para.cond(d).trials{i}(n).(lfpfield)];
-            end
-        end
-    end
-    me = nanmean(lfpall);
-    sd = nanstd(lfpall);
-else
-    me = 0; sd = 1;
-end
-for d = 1:2
-    lenlfp = length(para.cond(d).trials{end}(end).(lfpfield));
-    for i = 1:lenv    
-        for n = 1:para.cond(d).ntr(i)
-            para.cond(d).lfpfull{i}(n, 1:lenlfp) = (...
-                para.cond(d).trials{i}(n).(lfpfield) - me)/sd;
-        end
-    end
-end
+                lfpall = [lfpall,
     
+end
+
 % 'thinning' to control the difference in firing rate 
 j = 1;
 if thin==1
