@@ -192,13 +192,13 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
                 % lfp response
                 lfpseg = para.cond(d).trials{i}(n).(lfpfield)(para.cond(d).trials{i}(n).LFP_prepro_time > 0 ...
                     & para.cond(d).trials{i}(n).LFP_prepro_time <= 0.2);
-                para.cond(d).mat{i}(n, 5) = max(abs(lfpseg));
+                para.cond(d).mat{i}(n, 5) = mean(lfpseg);
                 
                 % low-freq power
-                para.cond(d).mat{i}(n, 6) = nanmean(S(f <= 10, n), 1);
+                para.cond(d).mat{i}(n, 6) = nanmean(10*log10(S(f <= 10, n)), 1);
                 
                 % gamma power
-                para.cond(d).mat{i}(n, 7) = nanmean(S(f >= 40, n), 1);
+                para.cond(d).mat{i}(n, 7) = nanmean(10*log10(S(f >= 40, n)), 1);
             end
         end  
     end     
@@ -321,7 +321,7 @@ if ismember(1, contains(analysis, 'all')) || sum(contains(analysis, 'coherence')
             para.cond(d).coherence.S12{i} = squeeze(nanmean(para.cond(d).coherence.S12{i}, 2));
             para.cond(d).coherence.S1{i} = squeeze(nanmean(para.cond(d).coherence.S1{i}, 2));
             para.cond(d).coherence.S2{i} = squeeze(nanmean(para.cond(d).coherence.S2{i}, 2));
-            para.cond(d).coherence.f{i} = nanmean(para.cond(d).coherence.f{i}, 1);
+            para.cond(d).coherence.f{i} = nanmean(para.cond(d).coherence.f{i}, 1)';
             
             % trial average coherence and phase
             C12 = para.cond(d).coherence.S12{i}./sqrt(para.cond(d).coherence.S1{i}.*para.cond(d).coherence.S2{i});
