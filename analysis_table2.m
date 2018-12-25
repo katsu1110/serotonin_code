@@ -1,4 +1,4 @@
- function anaT = analysis_table(lfps, splittype)
+ function anaT = analysis_table2(lfps, splittype)
 %%
 % generate a table to see how variables are related to one another
 % sessions x variables x stimulus type
@@ -147,12 +147,8 @@ stmidx(stmidx(:,1)==0, :) = [];
 ss = size(stmidx, 2);
 
 % variable names
-varnames = {'fr base', 'fr drug', 'r rate', 'noise corr base', 'noise corr drug', 'd noise corr', ...
-    'selectivity base', 'selectivity drug', 'd selectivity', 'snr2 base', 'snr2 drug', 'd snr2', ...
-    'tuning err base', 'tuning err drug', 'd tuning err', 'sig corr base', 'sig corr drug', 'd sig corr', 'ff base', 'ff drug', 'd ff',...
-    'median si-mu base', 'median si-mu drug', 'd median si-mu', 'var si-mu base', 'var si-mu drug', 'd var si-mu', ...
-    'additive change', 'gain change', 'wavewidth', 'RFx', 'RFy', 'sta amp base', 'sta amp drug', ...
-    'd sta amp', 'sta Tmin base', 'sta Tmin drug', 'd sta Tmin', 'theta pow base', 'theta pow drug', ...
+varnames = {'fr base', 'fr drug', 'r rate', ...
+    'sta amp base', 'sta amp drug', 'd sta amp', 'sta Tmin base', 'sta Tmin drug', 'd sta Tmin', 'theta pow base', 'theta pow drug', ...
     'd theta pow', 'alpha pow base', 'alpha pow drug', 'd alpha pow', 'beta pow base', 'beta pow drug', ...
     'd beta pow', 'gamma pow base', 'gamma pow drug', 'd gamma pow', 'low-freq pow base', 'low-freq pow drug', 'd low-freq pow', ...
     'broadband pow base', 'broadband pow drug', 'd broadband pow', 'theta res base', 'theta res drug', 'd theta res', ...
@@ -164,139 +160,35 @@ varnames = {'fr base', 'fr drug', 'r rate', 'noise corr base', 'noise corr drug'
     'coh broadband base', 'coh broadband drug', 'd coh broadband', 'phase theta base', 'phase theta drug', 'd phase theta', ...
     'phase alpha base', 'phase alpha drug', 'd phase alpha', 'phase beta base', 'phase beta drug', 'd phase beta', ...
     'phase gamma base', 'phase gamma drug', 'd phase gamma','phase low-freq base', 'phase low-freq drug', 'd phase low-freq',...
-    'phase broadband base', 'phase broadband drug', 'd phase broadband', 'lfpsd theta base', 'lfpsd theta drug', 'd lfpsd theta', ...
-    'lfpsd alpha base', 'lfpsd alpha drug', 'd lfpsd alpha', 'lfpsd beta base', 'lfpsd beta drug', 'd lfpsd beta', ...
-    'lfpsd gamma base', 'lfpsd gamma drug', 'd lfpsd gamma', 'lfpsd low-freq base', 'lfpsd low-freq drug', ...
-    'd lfpsd low-freq', 'lfpsd broadband base', 'lfpsd broadband drug', 'd lfpsd broadband', ...
-    'lfpsd signal base', 'lfpsd signal drug', 'd lfpsd signal', 'lfppow ratio base', 'lfppow ratio drug', 'd lfppow ratio'};
+    'phase broadband base', 'phase broadband drug', 'd phase broadband', ...
+    'lfp signal base', 'lfp signal drug', 'd lfp signal', 'lfppow ratio base', 'lfppow ratio drug', 'd lfppow ratio', ...
+    'low-freq drug weight', 'low-freq ps weight', 'low-freq dps weight', 'low-freq drugxps weight', 'low-freq drugxdps weight'};
 
 lenv = length(varnames);
+
+% mdlnames = {'low-freq'};
+mdly = 8;
+mdlout = {[6:11]};
+lenm = length(mdly);
+w = cell(1, lenm);
 
 bandnames = {'theta (3-7)', 'alpha (8-13)', 'beta (14-24)', 'gamma (36-48)', ...
     'low-freq (3-10)', 'broadband (3-48)'};
 bandrange = {[3, 7], [8, 12], [15, 25], [40, 48], [3, 10], [3, 48]};
 lenb = length(bandnames);
     
-at = nan(lenses, lenv, ss);
 
-% bandpass filtering for spike counts ===============================
-% [b1, a1] = butter(8, 1/200, 'high');
+at = nan(lenses, lenv, ss);
 
 for i = 1:lenses
     for s = 1:ss
-        % firing rate and sensory coding =====================
+        % firing rate  =====================
         % fr base
         at(i, 1, s) = datast{i}.cond(1).spk_tu{1}(1);
         % fr drug
         at(i, 2, s) = datast{i}.cond(2).spk_tu{1}(1);
         % r rate
         at(i, 3, s) = datast{i}.cond(2).spk_tu{1}(s, 1)/datast{i}.cond(1).spk_tu{1}(s, 1);
-        % noise corr base
-        sua0ori = round(dur*datast{i}.cond(1).lfprel.mat{s}(:, 1))';
-%         sua0 = filter(b1, a1, sua0ori);
-        sua0 = locdetrend(sua0ori, 1, [20, 1]);
-%         sua0 = sua0 - mean(sua0);
-        sua0 = sua0 - mean(sua0) + dur*at(i, 1, s);
-        sua0(sua0 <= 0) = 0;
-        sua0 = round(sua0);
-        mua0 = round(dur*datast{i}.cond(1).lfprel.mat{s}(:, 2))';
-%         mua0 = filter(b1, a1, mua0);
-        mua0 = locdetrend(mua0, 1, [20, 1]);
-%         mua0 = mua0 - mean(mua0);
-        mua0 = round(mua0 - mean(mua0) + dur*mean(datast{i}.cond(1).lfprel.mat{s}(:, 2)));
-        rr = corrcoef(zscore(sua0), zscore(mua0));
-        at(i, 4, s) = rr(1,2);
-        at(i, 4, s) = 0.5*log((1+at(i, 4, s))/(1-at(i, 4, s)));
-        % noise corr drug
-        sua2ori = dur*datast{i}.cond(2).lfprel.mat{s}(:, 1)';
-%         sua2 = filter(b1, a1, sua2ori);
-        sua2 = locdetrend(sua2ori, 1, [20, 1]);
-%         sua2 = sua2 - mean(sua2);
-        sua2 = sua2 - mean(sua2) + dur*at(i, 2, s);
-        sua2(sua2 <= 0) = 0;
-        sua2 = round(sua2);
-        mua2 = dur*datast{i}.cond(2).lfprel.mat{s}(:, 2)';
-%         mua2 = filter(b1, a1, mua2);
-        mua2 = locdetrend(mua2, 1, [20, 1]);
-%         mua2 = mua2 - mean(mua2);
-        mua2 = round(mua2 - mean(mua2) + dur*mean(datast{i}.cond(2).lfprel.mat{s}(:, 2)));
-        rr = corrcoef(zscore(sua2), zscore(mua2));
-        at(i, 5, s) = rr(1,2);
-        at(i, 5, s) = 0.5*log((1+at(i, 5, s))/(1-at(i, 5, s)));
-        % d noise corr
-        at(i, 6, s) = at(i, 4, s) - at(i, 5, s);
-        % selectivity base
-        at(i, 7, s) = datast{i}.cond(1).tuning.spikes.unique.circularvariance;
-        % selectivity drug
-        at(i, 8, s) = datast{i}.cond(2).tuning.spikes.unique.circularvariance;
-        % d selectivity
-        at(i, 9, s) = at(i, 7, s) - at(i, 8, s);
-        % snr2 base
-        at(i, 10, s) = nanmean(datast{i}.cond(1).tuning.spikes.snr2);
-        % snr2 drug
-        at(i, 11, s) = nanmean(datast{i}.cond(2).tuning.spikes.snr2);
-        % d snr2
-        at(i, 12, s) = at(i, 10, s) - at(i, 11, s);
-        % tuning error base
-        at(i, 13, s) = nanmean(datast{i}.cond(1).tuning.su_fitparam.val.sem);
-        % tuning error drug
-        at(i, 14, s) = nanmean(datast{i}.cond(2).tuning.su_fitparam.val.sem);
-        % tuning error base
-        at(i, 15, s) = at(i, 13, s) - at(i, 14, s);
-        % signal corr base
-        rr = corrcoef(zscore(datast{i}.cond(1).tuning.su_fitparam.val.mn), ...
-            zscore(datast{i}.cond(1).tuning.mu_fitparam.val.mn));
-        at(i, 16, s) = rr(1, 2);
-        % signal corr drug
-        rr = corrcoef(zscore(datast{i}.cond(2).tuning.su_fitparam.val.mn), ...
-            zscore(datast{i}.cond(2).tuning.mu_fitparam.val.mn));
-        at(i, 17, s) = rr(1, 2);
-        % d signal corr
-        at(i, 18, s) = at(i, 16, s) - at(i, 17, s);
-        % fano factor base
-        prshat_srp = soft_rect_p(sua0);
-        at(i, 19, s) = exp(prshat_srp(end))/prshat_srp(1);
-%          at(i, 19, s) = std(sua0);
-%         at(i, 19, s) = var(sua0)/mean(sua0);
-%         at(i, 19, s) = sqrt(exp(var(log(sua0))) - 1);
-        % fano factor drug
-        prshat_srp = soft_rect_p(sua2);
-        at(i, 20, s) = exp(prshat_srp(end))/prshat_srp(1);
-%         at(i, 20, s) = var(sua2)/mean(sua2);
-%         at(i, 20, s) = std(sua2);
-%         at(i, 20, s) = sqrt(exp(var(log(sua2))) - 1);
-        % d fano factor
-        at(i, 21, s) = at(i, 19, s) - at(i, 20, s);
-        
-        % within-trial variability ===========================
-        % median si base
-        at(i, 22, s) = nanmedian(SI_all.si{1}{sesidx(i)}(:, 2));
-        % median si drug
-        at(i, 23, s) = nanmedian(SI_all.si{2}{sesidx(i)}(:, 2));
-        % d median si
-        at(i, 24, s) = at(i, 22, s) - at(i, 23, s);
-        % var si base
-        at(i, 25, s) = nanvar(SI_all.si{1}{sesidx(i)}(:, 2));
-        % var si drug
-        at(i, 26, s) = nanvar(SI_all.si{2}{sesidx(i)}(:, 2));
-        % d var si
-        at(i, 27, s) = at(i, 25, s) - at(i, 26, s);
-        
-        % change in tuning curve ====================
-        beta = gmregress(datast{i}.cond(1).tuning.su_fitparam.val.mn, ...
-            datast{i}.cond(2).tuning.su_fitparam.val.mn);
-        % additive change
-        at(i, 28, s) = beta(1);
-        % gain change 
-        at(i, 29, s) = beta(2);
-        
-        % neural properties ======================
-        % wavewidth
-        at(i, 30, s) = smlinfo.paramat(sesidx(i), 7);
-        % RF x
-        at(i, 31, s) = smlinfo.paramat(sesidx(i), 8);
-        % RF y
-        at(i, 32, s) = smlinfo.paramat(sesidx(i), 9);
         
         % stLFP ================================
         % sta amp base
@@ -312,7 +204,7 @@ for i = 1:lenses
 %         zerotb = reft(zerotb);
         zerotb = sta_analysis_time(zerotb);
 %         at(i, 30, s) = abs(ampb);
-        at(i, 33, s) = maxv - minv;
+        at(i, 4, s) = maxv - minv;
         % sta amp drug
         [maxv, maxt] = max(datast{i}.cond(2).sta.mean(stmidx(i, s), sta_analysiswnd));
         [minv, zerotd] = min(datast{i}.cond(2).sta.mean(stmidx(i, s), sta_analysiswnd));
@@ -321,23 +213,23 @@ for i = 1:lenses
 %         zerotb = reft(zerotb);
         zerotd = sta_analysis_time(zerotd);
 %         at(i, 31, s) = abs(ampd);
-        at(i, 34, s) = maxv - minv;
+        at(i, 5, s) = maxv - minv;
         % d sta amp
-        at(i, 35, s) = at(i, 33, s) - at(i, 34, s);
+        at(i, 6, s) = at(i, 4, s) - at(i, 5, s);
         % sta Tmin base
-        at(i, 36, s) = zerotb;
+        at(i, 7, s) = zerotb;
         % sta Tmin drug
-        at(i, 37, s) = zerotd;
+        at(i, 8, s) = zerotd;
         % d sta Tmin
-        at(i, 38, s) = at(i, 36, s) - at(i, 37, s);
+        at(i, 9, s) = at(i, 7, s) - at(i, 8, s);
         
         % spectral power & response & coherence & phase & lfp SD & LFP vs PS or FR ======
         freq = datast{i}.cond(1).spectrogram.f{1};
         spe_t = datast{i}.cond(1).spectrogram.t{1};
         lent = length(spe_t);
         spe_t = linspace(-0.1, stmdur, lent);
-        S1 = 10*log10(datast{i}.cond(1).spectrogram.S{stmidx(i, s)});
-        S2 = 10*log10(datast{i}.cond(2).spectrogram.S{stmidx(i, s)});
+        S1 = 10*log10(datast{i}.cond(1).spectrogram.S{stmidx(i, s)})';
+        S2 = 10*log10(datast{i}.cond(2).spectrogram.S{stmidx(i, s)})';
         freqc = datast{i}.cond(1).coherence.f{stmidx(i, s)};
         coh1 = datast{i}.cond(1).coherence.C{stmidx(i, s)};
         coh2 = datast{i}.cond(2).coherence.C{stmidx(i, s)};
@@ -350,58 +242,85 @@ for i = 1:lenses
             
             % overall power =============
             % base 
-            at(i, 39 + 3*(b-1), s) = nanmean(nanmean(S1(frange, spe_t > datast{i}.window{end}(1))));
+            at(i, 10 + 3*(b-1), s) = nanmean(nanmean(S1(frange, spe_t > datast{i}.window{end}(1))));
             % drug 
-            at(i, 40 + 3*(b-1), s) = nanmean(nanmean(S2(frange, spe_t > datast{i}.window{end}(1))));
+            at(i, 11 + 3*(b-1), s) = nanmean(nanmean(S2(frange, spe_t > datast{i}.window{end}(1))));
             % d
-            at(i, 41 + 3*(b-1), s) = at(i, 39 + 3*(b-1), s) - at(i, 40 + 3*(b-1), s);
+            at(i, 12 + 3*(b-1), s) = at(i, 10 + 3*(b-1), s) - at(i, 11 + 3*(b-1), s);
             
             % response power ===========
             % base 
-            at(i, 57 + 3*(b-1), s) = at(i, 39 + 3*(b-1), s) - ...
+            at(i, 28 + 3*(b-1), s) = at(i, 39 + 3*(b-1), s) - ...
                 nanmean(nanmean(S1(frange, spe_t < 0)));
             % drug 
-            at(i, 58 + 3*(b-1), s) = at(i, 40 + 3*(b-1), s) - ...
+            at(i, 29 + 3*(b-1), s) = at(i, 40 + 3*(b-1), s) - ...
                 nanmean(nanmean(S2(frange, spe_t < 0)));
             % d
-            at(i, 59 + 3*(b-1), s) = at(i, 57 + 3*(b-1), s) - at(i, 58 + 3*(b-1), s);            
+            at(i, 30 + 3*(b-1), s) = at(i, 28 + 3*(b-1), s) - at(i, 29 + 3*(b-1), s);            
             
             % coherence ===============
             % base 
-            at(i, 75 + 3*(b-1), s) = nanmean(coh1(frangec));
+            at(i, 46 + 3*(b-1), s) = nanmean(coh1(frangec));
             % drug
-            at(i, 76 + 3*(b-1), s) = nanmean(coh2(frangec));
+            at(i, 47 + 3*(b-1), s) = nanmean(coh2(frangec));
             % d
-            at(i, 77 + 3*(b-1), s) = at(i, 75 + 3*(b-1), s) - at(i, 76 + 3*(b-1), s);     
+            at(i, 48 + 3*(b-1), s) = at(i, 46 + 3*(b-1), s) - at(i, 47 + 3*(b-1), s);     
             
             % phase ==================
             % base 
-            at(i, 93 + 3*(b-1), s) = maxcoh_rad(coh1(frangec), phase1(frangec));
+            at(i, 64 + 3*(b-1), s) = maxcoh_rad(coh1(frangec), phase1(frangec));
             % drug
-            at(i, 94 + 3*(b-1), s) = maxcoh_rad(coh2(frangec), phase2(frangec));
+            at(i, 65 + 3*(b-1), s) = maxcoh_rad(coh2(frangec), phase2(frangec));
             % d
-            at(i, 95 + 3*(b-1), s) = at(i, 93 + 3*(b-1), s) - at(i, 94 + 3*(b-1), s);     
-                        
-            % LFP SD ==============
-            % base 
-            at(i, 111 + 3*(b-1), s) = nanstd(datast{i}.cond(1).lfprel.mat{s}(:, 6+b));
-            % drug
-            at(i, 112 + 3*(b-1), s) = nanstd(datast{i}.cond(2).lfprel.mat{s}(:, 6+b));
-            % d
-            at(i, 113 + 3*(b-1), s) = at(i, 111 + 3*(b-1), s) - at(i, 112 + 3*(b-1), s);   
+            at(i, 66 + 3*(b-1), s) = at(i, 64 + 3*(b-1), s) - at(i, 65 + 3*(b-1), s);     
         end  
-        % LFP SD base 
-        at(i, 129, s) = nanstd(datast{i}.cond(1).lfprel.mat{s}(:, 5));
-        % LFP SD drug
-        at(i, 130, s) = nanstd(datast{i}.cond(2).lfprel.mat{s}(:, 5));
-        % d LFP SD
-        at(i, 131, s) = at(i, 129, s) - at(i, 130, s);  
+        % LFP res base 
+        at(i, 82, s) = nanstd(datast{i}.cond(1).mat{s}(:, 6));
+        % LFP res drug
+        at(i, 83, s) = nanstd(datast{i}.cond(2).mat{s}(:, 6));
+        % d LFP res
+        at(i, 84, s) = at(i, 82, s) - at(i, 83, s);  
         % LFP power ratio base 
-        at(i, 132, s) = at(i, 39 + 3*(1-1), s)/at(i, 39 + 3*(4-1), s);
+        at(i, 85, s) = at(i, 10 + 3*(1-1), s)/at(i, 10 + 3*(4-1), s);
         % LFP power ratio drug
-        at(i, 133, s) = at(i, 40 + 3*(1-1), s)/at(i, 40 + 3*(4-1), s);
+        at(i, 86, s) = at(i, 11 + 3*(1-1), s)/at(i, 11 + 3*(4-1), s);
         % d LFP power ratio
-        at(i, 134, s) = at(i, 132, s) - at(i, 133, s);  
+        at(i, 87, s) = at(i, 85, s) - at(i, 86, s);  
+        
+        % lasso GLM weights =====================
+        % x and Y
+        mat0 = datast{i}.cond(1).mat{stmidx(i, s)};
+        mat2 = datast{i}.cond(2).mat{stmidx(i, s)};
+        ntr0 = size(mat0, 1);
+        ntr2 = size(mat2, 1);
+        X = [[zeros(ntr0, 1); ones(ntr2, 1)], ... % base or drug
+            [mat0(:, 3); mat2(:, 3)], ... % pupil size
+            [mat0(:, 4); mat2(:, 4)], ... % pupil size derivative
+            [zeros(ntr0, 1); ones(ntr2, 1)].*[mat0(: , 3); mat2(:, 3)], ... % interaction
+            [zeros(ntr0, 1); ones(ntr2, 1)].*[mat0(: , 4); mat2(:, 4)], ... % interaction
+            [mat0(:, 5); mat2(:, 5)], ... % LFP res
+            [mat0(:, 6); mat2(:, 6)], ... % ddLFP
+            [mat0(:, 7); mat2(:, 7)], ... % low-freq
+            [mat0(:, 8); mat2(:, 8)], ... % gamma
+            [mat0(:, 1); mat2(:,1)]/stmdur, ... % spike counts --> firing rate (su)
+            [mat0(:, 2); mat2(:,2)]/stmdur, ... % spike counts --> firing rate (mu)
+            ]; 
+        for m = 1:lenm
+            y = X(:, mdly(m));
+            predictors = zscore(X(:, ~ismember(1:size(X, 2), mdlout{m})));
+            
+            % model prediction
+            [B, FitInfo] = lassoglm(predictors, y, 'normal', 'CV', 3);
+            beta = [FitInfo.Intercept(FitInfo.IndexMinDeviance); B(:, FitInfo.IndexMinDeviance)];
+%             ypred = glmval(beta, predictors, 'identity');
+
+            % weight from the full model
+            at(i, 88, s) = beta(2); % drug
+            at(i, 89, s) = beta(3); % ps
+            at(i, 90, s) = beta(4); % dps
+            at(i, 91, s) = beta(5); % drug x ps
+            at(i, 92, s) = beta(6); % drug x dps
+        end
     end    
 end
 % fillnan
@@ -466,4 +385,3 @@ else
     end
     rad = circ_mean(rad(idx));
 end
-
