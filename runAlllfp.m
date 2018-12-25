@@ -435,7 +435,7 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'spike_count'))
             d2 = load([loadpath lfplist{i}{2}], 'ex');
             
             % analysis
-            Out1{i} = pair_stmLFP(d0.ex, d2.ex, 'LFP_prepro', 0, {'lfprel'}, 1);
+            Out1{i} = pair_stmLFP(d0.ex, d2.ex, 'LFP_prepro', 0, {'mat'}, 1);
 
             % stimlus type
             if stmtype(i) == 0

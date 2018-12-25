@@ -192,7 +192,7 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
                 % lfp response
                 lfpseg = para.cond(d).trials{i}(n).(lfpfield)(para.cond(d).trials{i}(n).LFP_prepro_time > 0 ...
                     & para.cond(d).trials{i}(n).LFP_prepro_time <= 0.2);
-                para.cond(d).mat{i}(n, 5) = mean(lfpseg);
+                para.cond(d).mat{i}(n, 5) = max(lfpseg) - min(lfpseg);
                 
                 % low-freq power
                 para.cond(d).mat{i}(n, 6) = nanmean(10*log10(S(f <= 10, n)), 1);

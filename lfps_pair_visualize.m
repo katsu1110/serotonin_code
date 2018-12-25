@@ -1100,7 +1100,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'coherence'))==1
             bandrange = {[0, 7], [8, 13], [14, 24], [36, 40], [40, 44], [44, 48]};
     end
     lenb = length(bandnames);
-    freq = datast{end}.cond(1).coherence.f{end};
+    freq = datast{end}.cond(1).coherence.f{end}';
     lenf = length(freq);
     yy = [0 0];
     coh = cell(1, ss);
@@ -1319,95 +1319,95 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'coherence'))==1
 end
 
 
-%%
-% Tuning =================================================
-if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'tuning'))==1
-    disp('tuning analysis ---------------------------')
-    
-%     addpath(genpath([mypath '/Katsuhisa/code/integrated/cbrewer']))
-%     CT = cbrewer('div', 'RdBu', 13);
-%     CT = flipud(CT);
-
-    % data extraction
-    if strcmp(datast{1}.stm.param, 'rc')        
-        % load Corinna's analysis =================
-        load([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/smlinfo.mat'])
-        
-        indnames = {'mean', 'selectivity', 'snr2', 'noise corr'};
-        tunames = {'spikes'};
-        
-        % compute tuning parameters
-        datast = encoding_tuning4rc(datast, smlinfo);
-    else
-        indnames = {'mean', 'reliability', 'selectivity', 'snr2', 'discriminability', 'entropy', 'c-entropy', 'MI'};
-        tunames = {'spikes', 'theta', 'alpha', 'beta', 'slow_gamma', 'fast_gamma'};
-    end
-    lent = length(tunames);
-    leni = length(indnames);
-    tudata = cell(2, lent);
-    for i = 1:lenses % sessions
-        for d = 1:2 % base or drug
-            for t = 1:lent % activity type
-                for l = 1:leni % index
-                    try
-                        if strcmp(indnames{l}, 'selectivity') && ismember(1, contains({'or', 'rc'}, datast{1}.stm.param))
-                            tudata{d, t}(i, l) = datast{i}.cond(d).tuning.(tunames{t}).unique.circularvariance;
-                        elseif strcmp(indnames{l}, 'snr2') || strcmp(indnames{l}, 'mean')
-                            tudata{d, t}(i, l) = mean(datast{i}.cond(d).tuning.(tunames{t}).(indnames{l})); 
-                        elseif strcmp(indnames{l}, 'entropy')           
-                            tudata{d, t}(i, l) = datast{i}.cond(d).tuning.(tunames{t}).metabcost(1);
-                        elseif strcmp(indnames{l}, 'c-entropy')           
-                            tudata{d, t}(i, l) = datast{i}.cond(d).tuning.(tunames{t}).metabcost(2);
-                        elseif strcmp(indnames{l}, 'MI')           
-                            tudata{d, t}(i, l) = datast{i}.cond(d).tuning.(tunames{t}).metabcost(3);
-                        elseif strcmp(indnames{l}, 'noise corr')
-                            tudata{d, t}(i, l) = datast{i}.cond(d).nc;
-                        else
-                            tudata{d, t}(i, l) = datast{i}.cond(d).tuning.(tunames{t}).(indnames{l});
-                        end
-                    catch
-                        tudata{d, t}(i, l) = nan;
-                    end
-                end
-            end
-        end
-    end       
-
-    % tuning index ==================================
-    for l = 1:leni % index
-        figure(j + l + 1);
-        for k = 1:ndrug % is5ht
-            for t = 1:lent % activity type
-                subplot(ndrug, lent, t + lent*(k-1))
-                try
-                    anim = 1*lists(lists(:,2)==k-1, 3);
-                    X = tudata{1, t}(lists(:,2)==k-1, l);
-                    Y = tudata{2, t}(lists(:,2)==k-1, l);
-                    nans = isnan(X) | isnan(Y);
-                    X(nans) = []; Y(nans) = []; anim(nans) = [];
-                    unity_scatter(X, Y, anim);
-                catch
-                    continue
-                end
-
-                % format
-                set(gca, 'box', 'off', 'tickdir', 'out')
-                if k==1
-                    title(tunames{t})
-                end
-                if t==1
-                    if k==1
-                        ylabel({'NaCl', '# pairs'})
-                    else
-                        xlabel(indnames{l})
-                        ylabel({'5HT', '# pairs'})
-                    end
-                end
-            end
-        end
-        set(gcf, 'Name', indnames{l}, 'NumberTitle', 'off')
-    end
-    j = j + l + 1;
+% %%
+% % Tuning =================================================
+% if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'tuning'))==1
+%     disp('tuning analysis ---------------------------')
+%     
+% %     addpath(genpath([mypath '/Katsuhisa/code/integrated/cbrewer']))
+% %     CT = cbrewer('div', 'RdBu', 13);
+% %     CT = flipud(CT);
+% 
+%     % data extraction
+%     if strcmp(datast{1}.stm.param, 'rc')        
+%         % load Corinna's analysis =================
+%         load([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/smlinfo.mat'])
+%         
+%         indnames = {'mean', 'selectivity', 'snr2', 'noise corr'};
+%         tunames = {'spikes'};
+%         
+%         % compute tuning parameters
+%         datast = encoding_tuning4rc(datast, smlinfo);
+%     else
+%         indnames = {'mean', 'reliability', 'selectivity', 'snr2', 'discriminability', 'entropy', 'c-entropy', 'MI'};
+%         tunames = {'spikes', 'theta', 'alpha', 'beta', 'slow_gamma', 'fast_gamma'};
+%     end
+%     lent = length(tunames);
+%     leni = length(indnames);
+%     tudata = cell(2, lent);
+%     for i = 1:lenses % sessions
+%         for d = 1:2 % base or drug
+%             for t = 1:lent % activity type
+%                 for l = 1:leni % index
+%                     try
+%                         if strcmp(indnames{l}, 'selectivity') && ismember(1, contains({'or', 'rc'}, datast{1}.stm.param))
+%                             tudata{d, t}(i, l) = datast{i}.cond(d).tuning.(tunames{t}).unique.circularvariance;
+%                         elseif strcmp(indnames{l}, 'snr2') || strcmp(indnames{l}, 'mean')
+%                             tudata{d, t}(i, l) = mean(datast{i}.cond(d).tuning.(tunames{t}).(indnames{l})); 
+%                         elseif strcmp(indnames{l}, 'entropy')           
+%                             tudata{d, t}(i, l) = datast{i}.cond(d).tuning.(tunames{t}).metabcost(1);
+%                         elseif strcmp(indnames{l}, 'c-entropy')           
+%                             tudata{d, t}(i, l) = datast{i}.cond(d).tuning.(tunames{t}).metabcost(2);
+%                         elseif strcmp(indnames{l}, 'MI')           
+%                             tudata{d, t}(i, l) = datast{i}.cond(d).tuning.(tunames{t}).metabcost(3);
+%                         elseif strcmp(indnames{l}, 'noise corr')
+%                             tudata{d, t}(i, l) = datast{i}.cond(d).nc;
+%                         else
+%                             tudata{d, t}(i, l) = datast{i}.cond(d).tuning.(tunames{t}).(indnames{l});
+%                         end
+%                     catch
+%                         tudata{d, t}(i, l) = nan;
+%                     end
+%                 end
+%             end
+%         end
+%     end       
+% 
+%     % tuning index ==================================
+%     for l = 1:leni % index
+%         figure(j + l + 1);
+%         for k = 1:ndrug % is5ht
+%             for t = 1:lent % activity type
+%                 subplot(ndrug, lent, t + lent*(k-1))
+%                 try
+%                     anim = 1*lists(lists(:,2)==k-1, 3);
+%                     X = tudata{1, t}(lists(:,2)==k-1, l);
+%                     Y = tudata{2, t}(lists(:,2)==k-1, l);
+%                     nans = isnan(X) | isnan(Y);
+%                     X(nans) = []; Y(nans) = []; anim(nans) = [];
+%                     unity_scatter(X, Y, anim);
+%                 catch
+%                     continue
+%                 end
+% 
+%                 % format
+%                 set(gca, 'box', 'off', 'tickdir', 'out')
+%                 if k==1
+%                     title(tunames{t})
+%                 end
+%                 if t==1
+%                     if k==1
+%                         ylabel({'NaCl', '# pairs'})
+%                     else
+%                         xlabel(indnames{l})
+%                         ylabel({'5HT', '# pairs'})
+%                     end
+%                 end
+%             end
+%         end
+%         set(gcf, 'Name', indnames{l}, 'NumberTitle', 'off')
+%     end
+%     j = j + l + 1;
 
 %     % confusion matrix (spikes vs LFP) ===============================
 %     if ~strcmp(datast{1}.stm.param, 'rc')
@@ -1488,76 +1488,76 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'tuning'))==1
 %         j = j + l + 3;
 %     end
         
-    % coherence vs tuning parameter    
-    if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'coherence'))==1
-        for l = 1:leni % index
-            figure(j + l);
-            for a = 1:lena
-                for k = 1:ndrug % is5ht
-                    if a < 3
-                        cond = lists(:,2)==k-1 & lists(:,3)==a-1;
-                    else
-                        cond = lists(:,2)==k-1;
-                    end
-                    coh_base = zeros(sum(cond), length(freq));
-                    coh_drug = coh_base;
-                    for s = 1:ss
-                        temp = squeeze(coh{s}(cond, :, 1));
-                        nanrows = any(isnan(temp), 2);
-                        med = nanmedian(temp, 1);
-                        temp(nanrows, :) = repmat(med, sum(nanrows), 1);
-                        coh_base = coh_base + temp;
-                        temp = squeeze(coh{s}(cond, :, 2));
-                        nanrows = any(isnan(temp), 2);
-                        med = nanmedian(temp, 1);
-                        temp(nanrows, :) = repmat(med, sum(nanrows), 1);
-                        coh_drug = coh_drug + temp;
-                    end
-                    coh_base = coh_base/ss;
-                    coh_drug = coh_drug/ss;
-                    for b = 1:lenb % activity type
-                        % scatter & regression line
-                        if b==1
-                            frange = bandrange{b}(1) <= freq & ...
-                                bandrange{b+1}(2) >= freq;
-                        elseif b > 1 && b < lenb
-                            frange = bandrange{b+1}(1) <= freq & ...
-                                bandrange{b+1}(2) >= freq;
-                        else
-                            frange = bandrange{b+1}(1) <= freq & ...
-                                80 >= freq;
-                        end
-                        subplot(lena*ndrug, lenb, b + lenb*(k-1) + ndrug*lenb*(a-1))   
-                        X = [mean(coh_base(:, frange), 2); mean(coh_drug(:, frange), 2)];
-                        Y = [tudata{1, 1}(cond, l); tudata{2, 1}(cond, l)];% spikes
-                        try
-                            ls_scatter(X, Y, [zeros(sum(cond), 1); ones(sum(cond), 1)], 0);      
-                        catch
-                        end
-
-                        % format
-                        if k==1 && a==1
-                            title(bandnames{b})
-                        end
-                        if b==1
-                            if k==1
-                                ylabel({animals{a}, pairnames{k, 2}, indnames{l}})
-                            else
-                                if a==lena
-                                    xlabel('spike-LFP coherence')
-                                end
-                                ylabel({animals{a}, pairnames{k, 2}, indnames{l}})
-                            end
-                        end
-                    end
-                end
-            end
-            set(gcf, 'Name', ['spike-LFP coherence vs ' indnames{l} ' of spikes'], 'NumberTitle', 'off')
-        end
-
-    end
-    j = j + l;
-end
+%     % coherence vs tuning parameter    
+%     if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'coherence'))==1
+%         for l = 1:leni % index
+%             figure(j + l);
+%             for a = 1:lena
+%                 for k = 1:ndrug % is5ht
+%                     if a < 3
+%                         cond = lists(:,2)==k-1 & lists(:,3)==a-1;
+%                     else
+%                         cond = lists(:,2)==k-1;
+%                     end
+%                     coh_base = zeros(sum(cond), length(freq));
+%                     coh_drug = coh_base;
+%                     for s = 1:ss
+%                         temp = squeeze(coh{s}(cond, :, 1));
+%                         nanrows = any(isnan(temp), 2);
+%                         med = nanmedian(temp, 1);
+%                         temp(nanrows, :) = repmat(med, sum(nanrows), 1);
+%                         coh_base = coh_base + temp;
+%                         temp = squeeze(coh{s}(cond, :, 2));
+%                         nanrows = any(isnan(temp), 2);
+%                         med = nanmedian(temp, 1);
+%                         temp(nanrows, :) = repmat(med, sum(nanrows), 1);
+%                         coh_drug = coh_drug + temp;
+%                     end
+%                     coh_base = coh_base/ss;
+%                     coh_drug = coh_drug/ss;
+%                     for b = 1:lenb % activity type
+%                         % scatter & regression line
+%                         if b==1
+%                             frange = bandrange{b}(1) <= freq & ...
+%                                 bandrange{b+1}(2) >= freq;
+%                         elseif b > 1 && b < lenb
+%                             frange = bandrange{b+1}(1) <= freq & ...
+%                                 bandrange{b+1}(2) >= freq;
+%                         else
+%                             frange = bandrange{b+1}(1) <= freq & ...
+%                                 80 >= freq;
+%                         end
+%                         subplot(lena*ndrug, lenb, b + lenb*(k-1) + ndrug*lenb*(a-1))   
+%                         X = [mean(coh_base(:, frange), 2); mean(coh_drug(:, frange), 2)];
+%                         Y = [tudata{1, 1}(cond, l); tudata{2, 1}(cond, l)];% spikes
+%                         try
+%                             ls_scatter(X, Y, [zeros(sum(cond), 1); ones(sum(cond), 1)], 0);      
+%                         catch
+%                         end
+% 
+%                         % format
+%                         if k==1 && a==1
+%                             title(bandnames{b})
+%                         end
+%                         if b==1
+%                             if k==1
+%                                 ylabel({animals{a}, pairnames{k, 2}, indnames{l}})
+%                             else
+%                                 if a==lena
+%                                     xlabel('spike-LFP coherence')
+%                                 end
+%                                 ylabel({animals{a}, pairnames{k, 2}, indnames{l}})
+%                             end
+%                         end
+%                     end
+%                 end
+%             end
+%             set(gcf, 'Name', ['spike-LFP coherence vs ' indnames{l} ' of spikes'], 'NumberTitle', 'off')
+%         end
+% 
+%     end
+%     j = j + l;
+% end
 
 % %%
 % % Tuning curve =================================================
