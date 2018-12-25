@@ -315,11 +315,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'ff'))==1
             ff(i, 1, d) = nanmean(nanvar(scmat, [], 1)./nanmean(scmat, 1));
 
             % exponential nonlinearity
-            try
-                [prshat{i, d}, sff] = fit_flexiblemodulatedpoiss(scmat, 'exp');
-            catch
-                keyboard
-            end
+            [prshat{i, d}, sff] = fit_flexiblemodulatedpoiss(scmat, 'exp');
             ff(i, 2, d) = mean(sff);
             
 %             % noise correlation

@@ -157,10 +157,6 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
     lenl = length(collab);
     ts = 0.3; % 3 tapers
     params = define_params(fs, ts, 0);
-    psf = 4;
-    if stmdur < 2
-        psf = 2;
-    end
     for d = 1:2
         para.cond(d).collab = collab; 
         for i = 1:lenv            
@@ -172,7 +168,7 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
             % LFP power
             [S, f] = mtspectrumc(para.cond(d).lfpfull{i}(:, ...
                 para.cond(d).trials{i}(end).LFP_prepro_time > para.window{end}(1) ...
-                & para.cond(d).trials{i}(end).LFP_prepro_time <= para.window{end}(2))', ...
+                & para.cond(d).trials{i}(end).LFP_prepro_time <= para.window{end}(2)), ...
                 params);
             for n = 1:para.cond(d).ntr(i)
                 % spike count (su)
@@ -186,12 +182,12 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
                 enpos = para.cond(d).trials{i}(n).Eye_prepro.enpos;
                 ps_temp = nanmean([para.cond(d).trials{i}(n).Eye_prepro.psR; ...
                     para.cond(d).trials{i}(n).Eye_prepro.psL], 1);
-                para.cond(d).mat{i}(n, 3) = nanmean(ps_temp(end-round((enpos-stpos)/psf)+1:end));
+                para.cond(d).mat{i}(n, 3) = nanmean(ps_temp(end-round((enpos-stpos)/4)+1:end));
                 
                 % pupil size derivative
                 ps_temp = nanmean([para.cond(d).trials{i}(n).Eye_prepro.dpsR; ...
                     para.cond(d).trials{i}(n).Eye_prepro.dpsL], 1);
-                para.cond(d).mat{i}(n, 4) = nanmean(ps_temp(end-round((enpos-stpos)/psf)+1:end));
+                para.cond(d).mat{i}(n, 4) = nanmean(ps_temp(end-round((enpos-stpos)/4)+1:end));
                 
                 % lfp response
                 lfpseg = para.cond(d).trials{i}(n).(lfpfield)(para.cond(d).trials{i}(n).LFP_prepro_time > 0 ...
@@ -200,13 +196,13 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
                 
                 % CSD (second derivative of LFPs)
                 dlfp = [diff(lfpseg(1:2)) diff(lfpseg)];
-                para.cond(d).mat{i}(n, 6) = mean([diff(dlfp(1:2)) diff(dlfp)]);
+                para.cond(d).mat{i}(n, 6) = mean([diff(dlfp(1:2)) diff(
                 
                 % low-freq power
-                para.cond(d).mat{i}(n, 7) = nanmean(10*log10(S(f <= 10, n)), 1);
+                para.cond(d).mat{i}(n, 6) = nanmean(10*log10(S(f <= 10, n)), 1);
                 
                 % gamma power
-                para.cond(d).mat{i}(n, 8) = nanmean(10*log10(S(f >= 40, n)), 1);
+                para.cond(d).mat{i}(n, 7) = nanmean(10*log10(S(f >= 40, n)), 1);
             end
         end  
     end     
@@ -221,10 +217,8 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'sta
                 % compute a standard STA
                 stlfp = getSTA(para.cond(d).trials{i}(n).(lfpfield), ...
                     para.cond(d).trials{i}(n).LFP_prepro_time, ...
-                    para.cond(d).spk{j, i}{n}, para.wnd, fs);            
-                if ~isnan(stlfp)
-                    sta = [sta; stlfp];
-                end
+                    para.cond(d).spk{j, i}{n}, para.wnd, fs);                
+                sta = [sta; stlfp];
             end
             if ~isempty(sta)
                 % STA as a function of stimulus type
