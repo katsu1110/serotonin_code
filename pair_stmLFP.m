@@ -200,7 +200,7 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
                 
                 % CSD (second derivative of LFPs)
                 dlfp = [diff(lfpseg(1:2)) diff(lfpseg)];
-                para.cond(d).mat{i}(n, 6) = mean([diff(dlfp(1:2)) diff(dlfp)]);
+                para.cond(d).mat{i}(n, 6) = mean([0 diff(dlfp)]);
                 
                 % low-freq power
                 para.cond(d).mat{i}(n, 7) = nanmean(10*log10(S(f <= 10, n)), 1);

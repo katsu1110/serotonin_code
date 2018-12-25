@@ -335,7 +335,7 @@ end
 % LFP time-series =============================================
 if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'lfp'))==1
     disp('LFP time-series analysis ---------------------------------')
-    ts = linspace(-0.1, stmdur, 1000*(stmdur+0.2));
+    ts = linspace(-0.1, stmdur, 1000*(stmdur+0.1));
     lent = length(ts);
     figure(j + 1);              
     for s = 1:ss
@@ -395,21 +395,20 @@ end
 if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
     if strcmp(splittype, 'drug') && strcmp(datast{1}.stm.param, 'rc')
         disp('GLM analysis -------------------------')
-        varnames = {'intercept', 'su', 'mu', 'drug', 'ps', 'dps', 'drug x ps', 'drug x dps', ...
+        varnames = {'su', 'mu', 'drug', 'ps', 'dps', 'drug x ps', 'drug x dps', ...
             'lfp res', 'csd', 'low-freq', 'gamma'};
         lenp = length(varnames);
         mdly = [2, 3, 11];
         lenm = length(mdly);
-        ve = nan(lenses, lenp);
-        w = nan(lenses, lenp);
+        ve = nan(lenses, lenp-1, lenm);
+        w = nan(lenses, lenp-1, lenm);
         for i = 1:lenses
             % x and Y
             mat0 = datast{i}.cond(1).mat{stmidx(i, end)};
             mat2 = datast{i}.cond(2).mat{stmidx(i, end)};
             ntr0 = size(mat0, 1);
             ntr2 = size(mat2, 1);
-            X = [ones(ntr0+ntr2, 1), ... % intercept
-                [mat0(:, 1); mat2(:,1)], ... % spike counts (su)
+            X = [[mat0(:, 1); mat2(:,1)], ... % spike counts (su)
                 [mat0(:, 2); mat2(:,2)], ... % spike counts (mu)
                 [zeros(ntr0, 1); ones(ntr2, 1)], ... % base or drug
                 [mat0(:, 3); mat2(:, 3)], ... % pupil size
@@ -432,140 +431,146 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                 predictors = [X(:,1), zscore(X(:, ~ismember(1:lenp, mdly(m))))];
                 
                 for k = 1:lenp-1
-    %                 c = @(x) cost(x, y, base, X(:, 1:k+1));
-    %                 beta = fminsearch(c, x0(1:k+1), options);
-    %                 ypred = mymodel(beta, base, X(:, 1:k+1));
-
                     % model prediction
-                    beta = glmfit(X(:, 1:k+1), Y, 'normal', 'link', 'identity', 'constant', 'off');
-                    ypred = glmval(beta, X(:, 1:k+1), 'identity', 'constant', 'off');
-                    ypred = base*exp(ypred);
-
-        %             beta = glmfit(X(:, 1:k), y, 'normal', 'link', 'identity');
-        %             ypred = glmval(beta, X(:, 1:k), 'identity');
+                    [B, FitInfo] = lassoglm(predictors(:, 1:k), y, 'normal', 'CV', 2);
+                    beta = [FitInfo.Intercept(FitInfo.IndexMinDeviance); B(:, FitInfo.IndexMinDeviance)];
+                    ypred = glmval(beta, predictors(:, 1:k), 'identity');
 
                     % variance explained
-                    ve(i, k) = varexp(y, ypred);
+                    ve(i, k, m) = varexp(y, ypred);
                 end 
                 % weight from the full model
-                w(i, :) = beta(2:end);
+                w(i, :, m) = beta(2:end);
             end    
         end
 
         % visualize
-        for a = 1:lena
-            for k = 1:ndrug
-                % bar plots ================================================
-                figure(j+1);
-                if a < 3
-                    cond = lists(:,2)==k-1 & lists(:,3)==a-1;
-                else
-                    cond = lists(:,2)==k-1;
-                end
-               % weight
-               subplot(lena*ndrug, 2*ss, 1 + 2*ss*(k-1) + ndrug*2*ss*(a-1))
-               me = nanmean(w(cond, :), 1);
-               sem = nanstd(w(cond, :), [], 1)/sqrt(sum(cond));
-               for p = 1:lenp-1
-                   [~, pval] = ttest(w(cond, p));
-                   if pval < 0.05/lenp
-                        barcol = 'r';
-                   else
-                       barcol = 'k';
-                   end
-                   bar(p, me(p), 'FaceColor', barcol, 'EdgeColor', barcol)
-                   hold on;
-                   errorbar(p, me(p), sem(p), 'color', barcol, 'capsize', 0)
-                   hold on;
-               end
-               if a == 1 && k == 1
-                   title('weight')
-               end
-                ylabel({animals{a}, pairnames{k, 2}})
-                set(gca, 'XTick', 1:lenp-1, 'XTickLabel', [])
-                set(gca, 'box', 'off', 'tickdir', 'out')
-               if k == ndrug
-                   if a == lena
-                       set(gca, 'XTick', 1:lenp-1, 'XTickLabel', varnames(3:end))
-                   end
-                   xtickangle(45)
-               end
-
-               % variance explained
-               subplot(lena*ndrug, 2*ss, 2 + 2*ss*(k-1) + ndrug*2*ss*(a-1))
-               me = nanmean(ve(cond, :), 1);
-               sem = nanstd(ve(cond, :), [], 1)/sqrt(sum(cond));
-               for p = 1:lenp-1
-                   barcol = 'k';
-                   if p > 1
-                       [~, pval] = ttest(ve(cond, p-1), ve(cond, p));
-                       if pval < 0.05/lenp
-                            barcol = 'r';
+        c = 1;
+        vars = cell(1, m);
+        for m = 1:lenm
+            for a = 1:lena
+                for k = 1:ndrug
+                    % bar plots ================================================
+                    figure(j+c);
+                    if a < 3
+                        cond = lists(:,2)==k-1 & lists(:,3)==a-1;
+                    else
+                        cond = lists(:,2)==k-1;
+                    end
+                   % weight
+                   subplot(lena*ndrug, 2*ss, 1 + 2*ss*(k-1) + ndrug*2*ss*(a-1))
+%                    me = nanmean(squeeze(w(cond, :, m)), 1);
+%                    sem = nanstd(squeeze(w(cond, :, m)), [], 1)/sqrt(sum(cond));
+                   pcol = [];
+                   for p = 1:lenp-1
+                       [~, pval] = ttest(squeeze(w(cond, p, m)));
+                       if pval < 0.05/(lenp-1)
+                            pcol = [pcol; 1 0 0];
+                       else
+                           pcol = [pcol; 0 0 0];
                        end
-                       if me(p-1) > me(p) 
-                           bar(p, me(p-1), 'FaceColor', barcol, 'EdgeColor', barcol)
-                           hold on;
-                           bar(p, me(p), 'FaceColor', 'w', 'EdgeColor', 'w')
+%                        bar(p, me(p), 'FaceColor', barcol, 'EdgeColor', barcol)
+%                        hold on;
+%                        errorbar(p, me(p), sem(p), 'color', barcol, 'capsize', 0)
+%                        hold on;
+                   end
+                   vars_temp = varnames(~ismember(1:lenp, mdly(m)));
+                   vars{m} = cell(1, length(vars_temp));
+                   for l = 1:length(vars_temp)
+                       vars{m}{l} = char(vars_temp{l});
+                   end
+                   violin(squeeze(w(cond, :, m)), 'xlabel', vars{m}, ...
+                       'facecolor', pcol, 'edgecolor', [], 'mc', [], 'medc', ')
+                   legend('off')
+                   if a == 1 && k == 1
+                       title('weight')
+                   end
+                    ylabel({animals{a}, pairnames{k, 2}})
+%                     set(gca, 'XTick', 1:lenp-1, 'XTickLabel', [])
+                    set(gca, 'box', 'off', 'tickdir', 'out')
+%                    if k == ndrug
+%                        if a == lena
+%                            set(gca, 'XTick', 1:lenp-2, 'XTickLabel', varnames(3:end))
+%                        end
+%                        xtickangle(45)
+%                    end
+
+                   % variance explained
+                   subplot(lena*ndrug, 2*ss, 2 + 2*ss*(k-1) + ndrug*2*ss*(a-1))
+                   me = nanmean(squeeze(ve(cond, :, m)), 1);
+                   sem = nanstd(squeeze(ve(cond, :, m)), [], 1)/sqrt(sum(cond));
+                   for p = 1:lenp-1
+                       barcol = 'k';
+                       if p > 1
+                           [~, pval] = ttest(squeeze(ve(cond, p-1, m)), squeeze(ve(cond, p, m)));
+                           if pval < 0.05/(lenp-1)
+                                barcol = 'r';
+                           end
+                           if me(p-1) > me(p) 
+                               bar(p, me(p-1), 'FaceColor', barcol, 'EdgeColor', barcol)
+                               hold on;
+                               bar(p, me(p), 'FaceColor', 'w', 'EdgeColor', 'w')
+                           else
+                               bar(p, me(p), 'FaceColor', barcol, 'EdgeColor', barcol)
+                               hold on;
+                               bar(p, me(p-1), 'FaceColor', 'w', 'EdgeColor', 'w')
+                           end
                        else
                            bar(p, me(p), 'FaceColor', barcol, 'EdgeColor', barcol)
-                           hold on;
-                           bar(p, me(p-1), 'FaceColor', 'w', 'EdgeColor', 'w')
                        end
-                   else
-                       bar(p, me(p), 'FaceColor', barcol, 'EdgeColor', barcol)
+                       hold on;
+                       errorbar(p, me(p), sem(p), 'color', barcol, 'capsize', 0)
+                       hold on;
                    end
-                   hold on;
-                   errorbar(p, me(p), sem(p), 'color', barcol, 'capsize', 0)
-                   hold on;
-               end
-               if a == 1 && k == 1
-                   title('explained variance')
-               end
-               set(gca, 'XTick', 1:lenp-1, 'XTickLabel', [])
-               yy = get(gca, 'YLim');
-               ylim([floor(0.7*me(1)) yy(2)])
-               set(gca, 'box', 'off', 'tickdir', 'out')
-               if k == ndrug
-                   if a == lena
-                       set(gca, 'XTick', 1:lenp-1, 'XTickLabel', varnames(3:end))
+                   if a == 1 && k == 1
+                       title('explained variance')
                    end
-                   xtickangle(45)
-               end                
-            end
-            set(gcf, 'Name', 'GLM analysis', 'NumberTitle', 'off') 
+                   set(gca, 'XTick', 1:lenp-1, 'XTickLabel', [])
+                   yy = get(gca, 'YLim');
+                   ylim([floor(0.7*me(1)) yy(2)])
+                   set(gca, 'box', 'off', 'tickdir', 'out')
+                   if k == ndrug
+                       if a == lena
+                           set(gca, 'XTick', 1:lenp-1, 'XTickLabel', vars{m})
+                       end
+                       xtickangle(45)
+                   end                
+                end
+                set(gcf, 'Name', 'GLM analysis', 'NumberTitle', 'off') 
 
-            % histogram of weights =============================================
-           figure(j+2);
-           if a < 3
-              cond0 = lists(:,2)==0 & lists(:,3)==a-1;
-              cond2 = lists(:,2)==1 & lists(:,3)==a-1;
-           else
-              cond0 = lists(:,2)==0;
-              cond2 = lists(:,2)==1;
-           end
-           for p = 1:lenp-1
-               subplot(lena, lenp-1, p + (lenp-1)*(a-1))
-               [~, pval] = ttest2(w(cond0, p), w(cond2, p));
-               histogram(w(cond0, p), 'FaceColor', 'k')
-               hold on;
-               histogram(w(cond2, p), 'FaceColor', 'r')
-               hold on;
-               if a == 1
-                   title(varnames{2+p})
-               end        
-               if p==1
-                   ylabel(animals{a})
-               end
-               set(gca, 'box', 'off', 'tickdir', 'out')
-               xx = get(gca, 'XLim');
-               yy = get(gca, 'YLim');
-               text(xx(1)+0.7*(xx(2)-xx(1)), yy(1)+0.9*(yy(2)-yy(1)), ...
-                   ['p=' num2str(pval)], 'fontsize', 6)
-               axis([xx yy])
-           end 
+%                 % histogram of weights =============================================
+%                figure(j+c+1);
+%                if a < 3
+%                   cond0 = lists(:,2)==0 & lists(:,3)==a-1;
+%                   cond2 = lists(:,2)==1 & lists(:,3)==a-1;
+%                else
+%                   cond0 = lists(:,2)==0;
+%                   cond2 = lists(:,2)==1;
+%                end
+%                for p = 1:lenp-1
+%                    subplot(lena, lenp-1, p + (lenp-1)*(a-1))
+%                    [~, pval] = ttest2(squeeze(w(cond0, p, m)), squeeze(w(cond2, p, m)));
+%                    histogram(squeeze(w(cond0, p, m)), 'FaceColor', 'k')
+%                    hold on;
+%                    histogram(squeeze(w(cond2, p, m)), 'FaceColor', 'r')
+%                    hold on;
+%                    if a == 1
+%                        title(varnames{2+p})
+%                    end        
+%                    if p==1
+%                        ylabel(animals{a})
+%                    end
+%                    set(gca, 'box', 'off', 'tickdir', 'out')
+%                    xx = get(gca, 'XLim');
+%                    yy = get(gca, 'YLim');
+%                    text(xx(1)+0.7*(xx(2)-xx(1)), yy(1)+0.9*(yy(2)-yy(1)), ...
+%                        ['p=' num2str(pval)], 'fontsize', 6)
+%                    axis([xx yy])
+%                end 
+            end
+%             set(gcf, 'Name', 'GLM weight distribution', 'NumberTitle', 'off') 
+            j = j + c + 1;   
         end
-        set(gcf, 'Name', 'GLM weight distribution', 'NumberTitle', 'off') 
-        j = j + 2;   
     end
 end
 

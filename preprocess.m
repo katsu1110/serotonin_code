@@ -86,8 +86,8 @@ for n = 1:N
     psl_temp = ex.Trials(n).Eye.v(6, nonan);
     psr = downsample(psr_temp, round(500/ex.setup.refreshRate));
     psl = downsample(psl_temp, round(500/ex.setup.refreshRate));
-    dpsr = downsample([diff(psr_temp(1:2)) diff(psr_temp)], round(500/ex.setup.refreshRate));
-    dpsl = downsample([diff(psl_temp(1:2)) diff(psl_temp)], round(500/ex.setup.refreshRate));
+    dpsr = downsample([0 diff(psr_temp)], round(500/ex.setup.refreshRate));
+    dpsl = downsample([0 diff(psl_temp)], round(500/ex.setup.refreshRate));
     
     % store vectors
     eyeRX = [eyeRX, rx];
