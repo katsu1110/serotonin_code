@@ -199,7 +199,7 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
                 para.cond(d).mat{i}(n, 5) = max(lfpseg) - min(lfpseg);
                 
                 % CSD (second derivative of LFPs)
-                dlfp = [diff(lfpseg(1:2)) diff(lfpseg)];
+                dlfp = [0 diff(lfpseg)];
                 para.cond(d).mat{i}(n, 6) = mean([0 diff(dlfp)]);
                 
                 % low-freq power

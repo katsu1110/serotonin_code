@@ -395,10 +395,11 @@ end
 if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
     if strcmp(splittype, 'drug') && strcmp(datast{1}.stm.param, 'rc')
         disp('GLM analysis -------------------------')
-        varnames = {'su', 'mu', 'drug', 'ps', 'dps', 'drug x ps', 'drug x dps', ...
-            'lfp res', 'csd', 'low-freq', 'gamma'};
+        varnames = {'drug', 'ps', 'dps', 'drug x ps', 'drug x dps', ...
+            'lfp res', 'csd', 'low-freq', 'gamma', 'su', 'mu'};
         lenp = length(varnames);
-        mdly = [2, 3, 11];
+        mdlnames = {'su', 'mu', 'low-freq'};
+        mdly = [10, 11, 8];
         lenm = length(mdly);
         ve = nan(lenses, lenp-1, lenm);
         w = nan(lenses, lenp-1, lenm);
@@ -408,9 +409,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
             mat2 = datast{i}.cond(2).mat{stmidx(i, end)};
             ntr0 = size(mat0, 1);
             ntr2 = size(mat2, 1);
-            X = [[mat0(:, 1); mat2(:,1)], ... % spike counts (su)
-                [mat0(:, 2); mat2(:,2)], ... % spike counts (mu)
-                [zeros(ntr0, 1); ones(ntr2, 1)], ... % base or drug
+            X = [[zeros(ntr0, 1); ones(ntr2, 1)], ... % base or drug
                 [mat0(:, 3); mat2(:, 3)], ... % pupil size
                 [mat0(:, 4); mat2(:, 4)], ... % pupil size derivative
                 [zeros(ntr0, 1); ones(ntr2, 1)].*[mat0(: , 3); mat2(:, 3)], ... % interaction
@@ -419,20 +418,22 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                 [mat0(:, 6); mat2(:, 6)], ... % ddLFP
                 [mat0(:, 7); mat2(:, 7)], ... % low-freq
                 [mat0(:, 8); mat2(:, 8)], ... % gamma
+                [mat0(:, 1); mat2(:,1)]/stmdur, ... % spike counts --> firing rate (su)
+                [mat0(:, 2); mat2(:,2)]/stmdur, ... % spike counts --> firing rate (mu)
                 ]; 
 
             % fit GLM stepwise
             for m = 1:lenm
                 y = X(:, mdly(m));
-                if ismember(mdly(m), [2, 3])
+                if m < 3
                     % firing rate model
                     y = log(1+y);
                 end
-                predictors = [X(:,1), zscore(X(:, ~ismember(1:lenp, mdly(m))))];
+                predictors = zscore(X(:, ~ismember(1:lenp, mdly(m))));
                 
                 for k = 1:lenp-1
                     % model prediction
-                    [B, FitInfo] = lassoglm(predictors(:, 1:k), y, 'normal', 'CV', 2);
+                    [B, FitInfo] = lassoglm(predictors(:, 1:k), y, 'normal', 'CV', 3);
                     beta = [FitInfo.Intercept(FitInfo.IndexMinDeviance); B(:, FitInfo.IndexMinDeviance)];
                     ypred = glmval(beta, predictors(:, 1:k), 'identity');
 
@@ -461,39 +462,43 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                    subplot(lena*ndrug, 2*ss, 1 + 2*ss*(k-1) + ndrug*2*ss*(a-1))
 %                    me = nanmean(squeeze(w(cond, :, m)), 1);
 %                    sem = nanstd(squeeze(w(cond, :, m)), [], 1)/sqrt(sum(cond));
-                   pcol = [];
+
+                   plot([0 lenp], [0 0], ':k')
                    for p = 1:lenp-1
-                       [~, pval] = ttest(squeeze(w(cond, p, m)));
+                       pval = signrank(squeeze(w(cond, p, m)));
                        if pval < 0.05/(lenp-1)
-                            pcol = [pcol; 1 0 0];
+                            pcol = [1 0 0];
                        else
-                           pcol = [pcol; 0 0 0];
+                           pcol = [0 0 0];
                        end
 %                        bar(p, me(p), 'FaceColor', barcol, 'EdgeColor', barcol)
 %                        hold on;
 %                        errorbar(p, me(p), sem(p), 'color', barcol, 'capsize', 0)
 %                        hold on;
+                        y = squeeze(w(cond, p, m));
+                        x = p*ones(size(y));
+                        hold on;
+                        scatter(x, y, 20, 'o', 'markerfacecolor', pcol, 'markeredgecolor', pcol, ...
+                            'markerfacealpha', 0.4, 'markeredgealpha', 0.1)
+                        hold on;
+                        plot([p-0.25 p+0.25], mean(y)*[1 1], '-', 'color', [0 0.5 0], 'linewidth', 2)
                    end
-                   vars_temp = varnames(~ismember(1:lenp, mdly(m)));
-                   vars{m} = [];
-                   for l = 1:length(vars_temp)
-                       vars{m} = [vars{m}, vars_temp{l}];
-                   end
-                   violin(squeeze(w(cond, :, m)), 'xlabel', vars{m}, ...
-                       'facecolor', pcol, 'edgecolor', 'none', 'mc', [], 'medc', [0 0.5 0])
-                   legend('off')
+%                    hold on;
+                   vars{m} = varnames(~ismember(1:lenp, mdly(m)));
+%                    violin(squeeze(w(cond, :, m)),'facecolor', pcol, 'edgecolor', [], 'mc', [], 'medc', 'g-')
+%                    legend('off')
                    if a == 1 && k == 1
-                       title('weight')
+                       title(mdlnames{m})
                    end
                     ylabel({animals{a}, pairnames{k, 2}})
-%                     set(gca, 'XTick', 1:lenp-1, 'XTickLabel', [])
+                    set(gca, 'XTick', 1:lenp-1, 'XTickLabel', [])
                     set(gca, 'box', 'off', 'tickdir', 'out')
-%                    if k == ndrug
-%                        if a == lena
-%                            set(gca, 'XTick', 1:lenp-2, 'XTickLabel', varnames(3:end))
-%                        end
-%                        xtickangle(45)
-%                    end
+                   if k == ndrug
+                       if a == lena
+                           set(gca, 'XTick', 1:lenp-1, 'XTickLabel', vars{m})
+                       end
+                       xtickangle(45)
+                   end
 
                    % variance explained
                    subplot(lena*ndrug, 2*ss, 2 + 2*ss*(k-1) + ndrug*2*ss*(a-1))
@@ -502,7 +507,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                    for p = 1:lenp-1
                        barcol = 'k';
                        if p > 1
-                           [~, pval] = ttest(squeeze(ve(cond, p-1, m)), squeeze(ve(cond, p, m)));
+                           pval = signrank(squeeze(ve(cond, p-1, m)), squeeze(ve(cond, p, m)));
                            if pval < 0.05/(lenp-1)
                                 barcol = 'r';
                            end
@@ -536,7 +541,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                        xtickangle(45)
                    end                
                 end
-                set(gcf, 'Name', 'GLM analysis', 'NumberTitle', 'off') 
+                set(gcf, 'Name', ['GLM: ' mdlnames{m}], 'NumberTitle', 'off') 
 
 %                 % histogram of weights =============================================
 %                figure(j+c+1);
