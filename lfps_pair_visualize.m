@@ -67,7 +67,7 @@ addpath(genpath([mypath '/Katsuhisa/code/integrated/matlab_usefulfunc']))
 stmdur = 0.45;
 switch datast{1}.stm.param
     case 'rc'
-%         % remove outliers
+%         % remocc outliers
 %         datast(1:3) = [];
 %         lists(1:3, :) = [];
         
@@ -124,7 +124,7 @@ switch datast{1}.stm.param
         end
 end
 
-% remove no-data sessions
+% remocc no-data sessions
 datast(stmidx(:,1)==0) = [];
 lists(stmidx(:,1)==0, :) = [];
 stmidx(stmidx(:,1)==0, :) = [];
@@ -395,7 +395,7 @@ end
 if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
     if strcmp(splittype, 'drug') && strcmp(datast{1}.stm.param, 'rc')
         disp('GLM analysis -------------------------')
-        varnames = {'drug', 'ps', 'dps', 'drug x ps', 'drug x dps', ...
+        varnames = {'ps', 'dps', 'drug', 'drug x ps', 'drug x dps', ...
             'lfp res', 'csd', 'low-freq', 'gamma', 'su', 'mu'};
 %         mdlnames = {'su', 'mu', 'low-freq'};
 %         mdly = [10, 11, 8];
@@ -404,17 +404,20 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
         mdlout = {[6:11]};
         lenm = length(mdly);
         lenp = zeros(1, lenm);
-        ve = cell(1, lenm);
+        cv = 2;
+        cc = cell(1, lenm);
         w = cell(1, lenm);
+        lam = 0.084;
         for i = 1:lenses
             % x and Y
             mat0 = datast{i}.cond(1).mat{stmidx(i, end)};
             mat2 = datast{i}.cond(2).mat{stmidx(i, end)};
             ntr0 = size(mat0, 1);
             ntr2 = size(mat2, 1);
-            X = [[zeros(ntr0, 1); ones(ntr2, 1)], ... % base or drug
+            X = [...
                 [mat0(:, 3); mat2(:, 3)], ... % pupil size
-                [mat0(:, 4); mat2(:, 4)], ... % pupil size derivative
+                [mat0(:, 4); mat2(:, 4)], ... % pupil size derivaticc
+                [zeros(ntr0, 1); ones(ntr2, 1)], ... % base or drug
                 [zeros(ntr0, 1); ones(ntr2, 1)].*[mat0(: , 3); mat2(:, 3)], ... % interaction
                 [zeros(ntr0, 1); ones(ntr2, 1)].*[mat0(: , 4); mat2(:, 4)], ... % interaction
                 [mat0(:, 5); mat2(:, 5)], ... % LFP res
@@ -425,7 +428,12 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                 [mat0(:, 2); mat2(:,2)]/stmdur, ... % spike counts --> firing rate (mu)
                 ]; 
 
+            % k-fold cross-validation
+            cvidx = crossvalind('Kfold', ntr0+ntr2, cv);
+            vec = 1:cv;
+            
             % fit GLM stepwise
+%             L = [];
             for m = 1:lenm
                 y = X(:, mdly(m));
 %                 if m < 3
@@ -434,20 +442,28 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
 %                 end
                 predictors = zscore(X(:, ~ismember(1:size(X, 2), mdlout{m})));
                 lenp(m) = size(predictors, 2);
-                for k = 1:lenp(m)
-                    % model prediction
-                    [B, FitInfo] = lassoglm(predictors(:, 1:k), y, 'normal', 'CV', 3);
-                    beta = [FitInfo.Intercept(FitInfo.IndexMinDeviance); B(:, FitInfo.IndexMinDeviance)];
-                    ypred = glmval(beta, predictors(:, 1:k), 'identity');
+                r_temp = nan(cv, lenp(m));
+                w_temp = nan(cv, lenp(m));
+                for v = 1:cv
+                    for k = 1:lenp(m)
+                        % model prediction (stepwise)
+                        [B, FitInfo] = lassoglm(predictors(cvidx==v, 1:k), y(cvidx==v), 'normal', 'lambda', lam);
+                        beta = [FitInfo.Intercept; B];                        
+                        ypred = glmval(beta, predictors(cvidx==vec(~ismember(vec, v)), 1:k), 'identity');
 
-                    % variance explained
-                    ve{m}(i, k) = varexp(y, ypred);
+                        % correlation coefficient
+                        rr = corrcoef(y(cvidx==vec(~ismember(vec, v))), ypred);
+                        r_temp(v, k) = rr(1, 2)^2;                        
+                    end
+%                     L = [L, FitInfo.LambdaMinDeviance];
+                    % weight
+                    w_temp(v, :) = beta(2:end);              
                 end 
-                % weight from the full model
-                w{m}(i, :) = beta(2:end);
+                cc{m}(i, :) = mean(r_temp, 1);      
+                w{m}(i, :) = mean(w_temp, 1);
             end    
         end
-        
+%         median(L)
         % visualize
         c = 1;
         vars = cell(1, m);
@@ -461,7 +477,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                     else
                         cond = lists(:,2)==k-1;
                     end
-                   % weight
+                   % individual correlation coefficients
                    subplot(lena*ndrug, 2*ss, 1 + 2*ss*(k-1) + ndrug*2*ss*(a-1))
 %                    me = nanmean(squeeze(w(cond, :, m)), 1);
 %                    sem = nanstd(squeeze(w(cond, :, m)), [], 1)/sqrt(sum(cond));
@@ -505,12 +521,12 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
 
                    % variance explained
                    subplot(lena*ndrug, 2*ss, 2 + 2*ss*(k-1) + ndrug*2*ss*(a-1))
-                   me = nanmean(ve{m}(cond, :), 1);
-                   sem = nanstd(ve{m}(cond, :), [], 1)/sqrt(sum(cond));
+                   me = nanmean(cc{m}(cond, :), 1);
+                   sem = nanstd(cc{m}(cond, :), [], 1)/sqrt(sum(cond));
                    for p = 1:lenp(m)
                        barcol = 'k';
                        if p > 1
-                           pval = signrank(ve{m}(cond, p-1), ve{m}(cond, p));
+                           pval = signrank(cc{m}(cond, p-1), cc{m}(cond, p));
                            if pval < 0.05/lenp(m)
                                 barcol = 'r';
                            end
@@ -524,6 +540,10 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                                bar(p, me(p-1), 'FaceColor', 'w', 'EdgeColor', 'w')
                            end
                        else
+                           pval = signrank(cc{m}(cond, p));
+                           if pval < 0.05/lenp(m)
+                                barcol = 'r';
+                           end
                            bar(p, me(p), 'FaceColor', barcol, 'EdgeColor', barcol)
                        end
                        hold on;
@@ -531,7 +551,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                        hold on;
                    end
                    if a == 1 && k == 1
-                       title('explained variance')
+                       title('variance explained')
                    end
                    set(gca, 'XTick', 1:lenp(m), 'XTickLabel', [])
                    yy = get(gca, 'YLim');
@@ -583,7 +603,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
 end
 
 %%
-% spike-triggered average LFP ===================================
+% spike-triggered accrage LFP ===================================
 if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'sta'))==1
     disp('STA analysis ----------------------------------------')
     bandnames = {'<theta (0-7)', 'alpha (8-13)', 'beta (14-24)', 'slow-gamma (25-40)', 'fast-gamma (45-70)'};
@@ -849,12 +869,12 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
 
         % visualize ===========================
         for k = 1:ndrug
-            statistics.drug(k).overall_pow = cell(lenb, 2);
+            statistics.drug(k).occrall_pow = cell(lenb, 2);
             statistics.drug(k).response_pow = cell(lenb, 2);
         end
         for a = 1:lena
             for k = 1:ndrug
-                % overall power ====================
+                % occrall power ====================
                 figure(j + 1);
                 subplot(lena*ndrug, 2*ss, 1 + 2*(s-1) + 2*ss*(k-1) + ndrug*2*ss*(a-1))
                 if a < 3
@@ -886,12 +906,12 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
 %                         else
 %                             sz = step(2)-step(1);
 %                         end
-%                         statistics.drug(k).overall_pow{b, d} = mat{d}(:, step(b) <= freq & ...
+%                         statistics.drug(k).occrall_pow{b, d} = mat{d}(:, step(b) <= freq & ...
 %                             step(b)+sz > freq);
-%                         statistics.drug(k).overall_pow{b, d} = mat{d}(:, b);
+%                         statistics.drug(k).occrall_pow{b, d} = mat{d}(:, b);
 %                     end
                     for b = 1:lenb
-                        statistics.drug(k).overall_pow{b, d} = mat{d}(:, bandrange{b}(1) <= freq & ...
+                        statistics.drug(k).occrall_pow{b, d} = mat{d}(:, bandrange{b}(1) <= freq & ...
                             bandrange{b}(2) >= freq);
                     end
                 end
@@ -903,8 +923,8 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
 %                 start = 3;
 %                 for b = 1:length(sfreq)
 %                     % ttest
-%                     pval = signrank(nanmean(statistics.drug(k).overall_pow{b, 1}, 2), ...
-%                         nanmean(statistics.drug(k).overall_pow{b, 2}, 2));
+%                     pval = signrank(nanmean(statistics.drug(k).occrall_pow{b, 1}, 2), ...
+%                         nanmean(statistics.drug(k).occrall_pow{b, 2}, 2));
 %                     if pval < 0.05/length(sfreq)      
 %                           pb = plot([start (freq(b)+freq(b+1))/2], [1 1]*yy_temp(2), ...
 %                               '-', 'color', 0.5*[0 1 0], 'linewidth', 2);
@@ -914,8 +934,8 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
 %                 end
                 % for stats
                 for b = 1:lenb
-                    pval = signrank(nanmean(statistics.drug(k).overall_pow{b, 1}, 2), ...
-                        nanmean(statistics.drug(k).overall_pow{b, 2}, 2));
+                    pval = signrank(nanmean(statistics.drug(k).occrall_pow{b, 1}, 2), ...
+                        nanmean(statistics.drug(k).occrall_pow{b, 2}, 2));
                     disp(['cond ' num2str(k) ':' bandnames{b} ', ' num2str(a) ', p=' num2str(pval*(2*lenb))])
                     if pval < 0.05/(2*lenb)    
                         disp([animals{a} ', ' bandnames{b} ', p = ' num2str(pval*lenb)])
@@ -1005,7 +1025,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
                     end
                 end
 
-                % average PSDs ==========================
+                % accrage PSDs ==========================
                 figure(j + 1 + s);
                 clim = {zeros(1, 2), zeros(1, 2)};
                 for d = 1:2
@@ -1047,11 +1067,11 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
             for b = 1:lenb
                 disp(['--- ' stmlab{s} '(' bandnames{b} ') -----------------------'])
 
-                % overall power
-                Xcond = mean(statistics.drug(1).overall_pow{b, 1}, 2) - mean(statistics.drug(1).overall_pow{b, 2}, 2);
-                Ycond = mean(statistics.drug(2).overall_pow{b, 1}, 2) - mean(statistics.drug(2).overall_pow{b, 2}, 2);
+                % occrall power
+                Xcond = mean(statistics.drug(1).occrall_pow{b, 1}, 2) - mean(statistics.drug(1).occrall_pow{b, 2}, 2);
+                Ycond = mean(statistics.drug(2).occrall_pow{b, 1}, 2) - mean(statistics.drug(2).occrall_pow{b, 2}, 2);
                 [~, pval] = ttest2(Xcond, Ycond);
-                disp(['overall power (cond1 vs cond2): p(ttest2) = ' num2str(pval)])
+                disp(['occrall power (cond1 vs cond2): p(ttest2) = ' num2str(pval)])
 
                 % response power
                 Xcond = mean(statistics.drug(1).response_pow{b, 1}, 2) - mean(statistics.drug(1).response_pow{b, 2}, 2);
@@ -1103,7 +1123,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
     set(gcf, 'Name', 'PSD', 'NumberTitle', 'off')
     for s = 1:ss
         figure(j+1+s);
-        set(gcf, 'Name',  ['average spectrogram: ' ...
+        set(gcf, 'Name',  ['accrage spectrogram: ' ...
             datast{1}.stm.param ' = ' stmlab{s}], 'NumberTitle', 'off')
     end
     j = j + 1 + ss;
@@ -1254,7 +1274,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'coherence'))==1
                 for b = 1:lenb
                     subplot(lena*ndrug, lenb, b + lenb*(k-1) + ndrug*lenb*(a-1))
         %             disp(['circular ww test: ' 'drug; ' drugnames{k} ' ' bandnames{b}])
-                    [rx, ry] = nan_remove_pair(rad{b, 1}, rad{b, 2}, 'mean');
+                    [rx, ry] = nan_remocc_pair(rad{b, 1}, rad{b, 2}, 'mean');
                     [ppval, s_table] = circ_wwtest(rx, ry);
 %                     pdelta = circ_rad2ang(circ_mean(rad{b,1}) - circ_mean(rad{b,2}));
                     npval = circ_cmtest(rx, ry);
@@ -1584,9 +1604,9 @@ end
 % end
 
 % %%
-% % Tuning curve =================================================
+% % Tuning curcc =================================================
 % if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'tufit'))==1
-%     disp('tuning curve analysis ---------------------------')
+%     disp('tuning curcc analysis ---------------------------')
 %     % data extraction
 %     if strcmp(datast{1}.stm.param, 'rc')        
 %         % load Corinna's analysis =================
@@ -1673,7 +1693,7 @@ end
 %%
 % subfunction
 function datast = encoding_tuning4rc(datast, smlinfo)
-% compute encoding indices from tuning curve
+% compute encoding indices from tuning curcc
 if length(datast) > 50
     sesidx = find(smlinfo.paramat(:,4)==0);
 else

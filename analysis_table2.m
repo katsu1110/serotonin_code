@@ -162,7 +162,7 @@ varnames = {'fr base', 'fr drug', 'r rate', ...
     'phase gamma base', 'phase gamma drug', 'd phase gamma','phase low-freq base', 'phase low-freq drug', 'd phase low-freq',...
     'phase broadband base', 'phase broadband drug', 'd phase broadband', ...
     'lfp signal base', 'lfp signal drug', 'd lfp signal', 'lfppow ratio base', 'lfppow ratio drug', 'd lfppow ratio', ...
-    'low-freq drug weight', 'low-freq ps weight', 'low-freq dps weight', 'low-freq drugxps weight', 'low-freq drugxdps weight'};
+    'low-freq ps weight', 'low-freq dps weight', 'low-freq drug weight', 'low-freq drugxps weight', 'low-freq drugxdps weight'};
 
 lenv = length(varnames);
 
@@ -170,7 +170,8 @@ lenv = length(varnames);
 mdly = 8;
 mdlout = {[6:11]};
 lenm = length(mdly);
-w = cell(1, lenm);
+cv = 2;
+lam = 0.084;
 
 bandnames = {'theta (3-7)', 'alpha (8-13)', 'beta (14-24)', 'gamma (36-48)', ...
     'low-freq (3-10)', 'broadband (3-48)'};
@@ -293,9 +294,9 @@ for i = 1:lenses
         mat2 = datast{i}.cond(2).mat{stmidx(i, s)};
         ntr0 = size(mat0, 1);
         ntr2 = size(mat2, 1);
-        X = [[zeros(ntr0, 1); ones(ntr2, 1)], ... % base or drug
-            [mat0(:, 3); mat2(:, 3)], ... % pupil size
+        X = [[mat0(:, 3); mat2(:, 3)], ... % pupil size
             [mat0(:, 4); mat2(:, 4)], ... % pupil size derivative
+            [zeros(ntr0, 1); ones(ntr2, 1)], ... % base or drug
             [zeros(ntr0, 1); ones(ntr2, 1)].*[mat0(: , 3); mat2(:, 3)], ... % interaction
             [zeros(ntr0, 1); ones(ntr2, 1)].*[mat0(: , 4); mat2(:, 4)], ... % interaction
             [mat0(:, 5); mat2(:, 5)], ... % LFP res
@@ -305,21 +306,24 @@ for i = 1:lenses
             [mat0(:, 1); mat2(:,1)]/stmdur, ... % spike counts --> firing rate (su)
             [mat0(:, 2); mat2(:,2)]/stmdur, ... % spike counts --> firing rate (mu)
             ]; 
+        
+        % k-fold cross-validation
+        cvidx = crossvalind('Kfold', ntr0+ntr2, cv);
+        
+        % full model fitting
         for m = 1:lenm
             y = X(:, mdly(m));
             predictors = zscore(X(:, ~ismember(1:size(X, 2), mdlout{m})));
             
-            % model prediction
-            [B, FitInfo] = lassoglm(predictors, y, 'normal', 'CV', 3);
-            beta = [FitInfo.Intercept(FitInfo.IndexMinDeviance); B(:, FitInfo.IndexMinDeviance)];
-%             ypred = glmval(beta, predictors, 'identity');
-
-            % weight from the full model
-            at(i, 88, s) = beta(2); % drug
-            at(i, 89, s) = beta(3); % ps
-            at(i, 90, s) = beta(4); % dps
-            at(i, 91, s) = beta(5); % drug x ps
-            at(i, 92, s) = beta(6); % drug x dps
+            % model prediction 
+            beta = nan(cv, size(predictors, 2));
+            for k = 1:cv
+                beta(k, :) = lassoglm(predictors(cvidx==k, :), y(cvidx==k), 'normal', 'lambda', lam);
+            end
+            beta = mean(beta, 1);
+            for k = 1:length(beta)
+                at(i, 88 + (k-1), s) = beta(k); 
+            end
         end
     end    
 end
