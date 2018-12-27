@@ -45,16 +45,16 @@ end
 
 %% try to load the corresponding lfp file and add the signal to each Trial
 if lfp_flag
-%     try
+    try
         exwlfp = load(strrep(fname, ['c' num2str(cn)], 'lfp'), 'ex'); % ex with lfp information       
-%     catch
-%         sorter_i = strfind(fname, 'sort');
-%         sorter = fname(sorter_i+4:sorter_i+5);
-%         if strcmp(sorter, 'HN')
-%             fname(sorter_i+4:sorter_i+5) = 'LH';
-%         end
-%         exwlfp = load(strrep(fname, ['c' num2str(cn)], 'lfp'), 'ex'); % ex with lfp information      
-%     end
+    catch
+        sorter_i = strfind(fname, 'sort');
+        sorter = fname(sorter_i+4:sorter_i+5);
+        if strcmp(sorter, 'HN')
+            fname(sorter_i+4:sorter_i+5) = 'LH';
+        end
+        exwlfp = load(strrep(fname, ['c' num2str(cn)], 'lfp'), 'ex'); % ex with lfp information      
+    end
     exwlfp = exwlfp.ex;
         
         for i =1:length(ex.Trials)
