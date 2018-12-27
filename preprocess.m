@@ -37,6 +37,16 @@ d = designfilt('bandstopiir','FilterOrder',notchord, ...
 ex.Trials = ex.Trials(label_seq > 0);
 N = length(ex.Trials);
 
+% remove trials with no lfp or eye data
+oks = ones(1, N);
+for n = 1:N
+    if isempty(ex.Trials(n).LFP) || isempty(ex.Trials(n).Eye.n)
+        oks(n) = 0;
+    end
+end
+ex.Trials = ex.Trials(oks==1);
+N = length(ex.Trials);
+
 % initialization
 lfps = [];
 eyeRX = [];
@@ -59,7 +69,11 @@ for n = 1:N
     ex.Trials(n).LFP_prepro_time = time - t_frame(1);
         
     % reduce the lfp signal to the period of stimulus presentation
-    lfps_temp = interp1(t_lfp, ex.Trials(n).LFP, ex.Trials(n).LFP_prepro_time);
+    try
+        lfps_temp = interp1(t_lfp, ex.Trials(n).LFP, ex.Trials(n).LFP_prepro_time);
+    catch
+        keyboard
+    end
     lfps = [lfps, lfps_temp];
     
     % start and end of the trial
@@ -197,9 +211,17 @@ end
 function avgstimdur = getStimDur(ex)
 % returns the averaged and rounded stimulus presentation duration across
 % trials
-t_frame = cellfun(@(x, y) x-y, {ex.Trials.Start}, {ex.Trials.TrialStart}, ...
-    'UniformOutput', 0); % time of frame onsets
-stimdur = cellfun(@(x) x(end)+mean(diff(x)) - x(1), t_frame);
+try
+    t_frame = cellfun(@(x, y) x-y, {ex.Trials.Start}, {ex.Trials.TrialStart}, ...
+        'UniformOutput', 0); % time of frame onsets
+    stimdur = cellfun(@(x) x(end)+mean(diff(x)) - x(1), t_frame);
 
-% also round the average stimulus duration to 2 digits precision
-avgstimdur = round(mean(stimdur), 2);
+    % also round the average stimulus duration to 2 digits precision
+    avgstimdur = round(mean(stimdur), 2);
+catch
+    if ex.exp.StimPerTrial == 4
+        avgstimdur = 0.45;
+    elseif ex.exp.StimPerTrial == 1
+        avgstimdur = 2;
+    end
+end
