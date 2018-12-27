@@ -191,7 +191,7 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
                 % pupil size derivative
                 ps_temp = nanmean([para.cond(d).trials{i}(n).Eye_prepro.dpsR; ...
                     para.cond(d).trials{i}(n).Eye_prepro.dpsL], 1);
-                para.cond(d).mat{i}(n, 4) = nanmean(ps_temp(end-round((enpos-stpos)/psf)+1:end));
+                para.cond(d).mat{i}(n, 4) = max(ps_temp(end-round((enpos-stpos)/psf)+1:end));
                 
                 % lfp response
                 lfpseg = para.cond(d).trials{i}(n).(lfpfield)(para.cond(d).trials{i}(n).LFP_prepro_time > 0 ...

@@ -31,7 +31,7 @@ d = designfilt('bandstopiir','FilterOrder',notchord, ...
 [b_low, a_low] = butter(bpord(2), bpf(2)/(Fs/2), 'low');
 
 % define bandpass filter for ps (Urai et al., 2017)
-[bps, aps] = butter(2, [0.01 10]/((500)/2), 'bandpass');
+[bps, aps] = butter(2, [0.01 10]/(500)/2, 'bandpass');
 
 % loop to get data ==================================
 ex.Trials = ex.Trials(label_seq > 0);
@@ -89,13 +89,13 @@ for n = 1:N
 %     dpsr = downsample([0 diff(psr_temp)], round(500/ex.setup.refreshRate));
 %     dpsl = downsample([0 diff(psl_temp)], round(500/ex.setup.refreshRate));
     rx = ex.Trials(n).Eye.v(1, nonan);
-    ry = ex.Trials(n).Eye.v(2, nonan);
-    lx = ex.Trials(n).Eye.v(4, nonan);
-    ly = ex.Trials(n).Eye.v(5, nonan);
-    psr = ex.Trials(n).Eye.v(3, nonan);
-    psl = ex.Trials(n).Eye.v(6, nonan);
-    dpsr = [0 diff(psr)];
-    dpsl = [0 diff(psl)];
+    rx = ex.Trials(n).Eye.v(2, nonan);
+    rx = ex.Trials(n).Eye.v(4, nonan);
+    rx = ex.Trials(n).Eye.v(5, nonan);
+    rx = ex.Trials(n).Eye.v(3, nonan);
+    rx = ex.Trials(n).Eye.v(1, nonan);
+    rx = ex.Trials(n).Eye.v(1, nonan);
+    rx = ex.Trials(n).Eye.v(1, nonan);
     
     % store vectors
     eyeRX = [eyeRX, rx];
@@ -113,10 +113,8 @@ for n = 1:N
         eye_timing(n, 1) = eye_timing(n-1, 2) + 1;
     end
     eye_timing(n, 2) = eye_timing(n, 1) + lenv - 1;
-    eye_timing(n, 3) = stpos;
-    eye_timing(n, 4) = enpos;
-%     eye_timing(n, 3) = round((lenv*stpos)/ex.Trials(n).Eye.n);
-%     eye_timing(n, 4) = round((lenv*enpos)/ex.Trials(n).Eye.n);
+    eye_timing(n, 3) = round((lenv*stpos)/ex.Trials(n).Eye.n);
+    eye_timing(n, 4) = round((lenv*enpos)/ex.Trials(n).Eye.n);
 end
 
 % filtering ==================================
@@ -132,32 +130,18 @@ dpsR= filter(bps, aps, dpsR);
 dpsL = filter(bps, aps, dpsL);
 
 % back to ex-file ==============================
-ds = round(500/ex.setup.refreshRate);
 for n = 1:N
     ex.Trials(n).LFP_prepro = lfps(lfps_timing(n,1):lfps_timing(n,2));
-%     ex.Trials(n).Eye_prepro.stpos = eye_timing(n, 3);
-%     ex.Trials(n).Eye_prepro.enpos = eye_timing(n, 4);
-%     ex.Trials(n).Eye_prepro.RX = eyeRX(eye_timing(n, 1):eye_timing(n, 2));
-%     ex.Trials(n).Eye_prepro.RY = eyeRY(eye_timing(n, 1):eye_timing(n, 2));
-%     ex.Trials(n).Eye_prepro.LX = eyeLX(eye_timing(n, 1):eye_timing(n, 2));
-%     ex.Trials(n).Eye_prepro.LY = eyeLY(eye_timing(n, 1):eye_timing(n, 2));
-%     ex.Trials(n).Eye_prepro.psR = psR(eye_timing(n, 1):eye_timing(n, 2));
-%     ex.Trials(n).Eye_prepro.psL = psL(eye_timing(n, 1):eye_timing(n, 2));
-%     ex.Trials(n).Eye_prepro.dpsR = dpsR(eye_timing(n, 1):eye_timing(n, 2));
-%     ex.Trials(n).Eye_prepro.dpsL = dpsL(eye_timing(n, 1):eye_timing(n, 2));
-    
-    % downsample to the stimulus frequency    
-    ex.Trials(n).Eye_prepro.RX = downsample(eyeRX(eye_timing(n, 1):eye_timing(n, 2)), ds);
-    ex.Trials(n).Eye_prepro.RY = downsample(eyeRY(eye_timing(n, 1):eye_timing(n, 2)), ds);
-    ex.Trials(n).Eye_prepro.LX = downsample(eyeLX(eye_timing(n, 1):eye_timing(n, 2)), ds);
-    ex.Trials(n).Eye_prepro.LY = downsample(eyeLY(eye_timing(n, 1):eye_timing(n, 2)), ds);
-    ex.Trials(n).Eye_prepro.psR = downsample(psR(eye_timing(n, 1):eye_timing(n, 2)), ds);
-    ex.Trials(n).Eye_prepro.psL = downsample(psL(eye_timing(n, 1):eye_timing(n, 2)), ds);
-    ex.Trials(n).Eye_prepro.dpsR = downsample(dpsR(eye_timing(n, 1):eye_timing(n, 2)), ds);
-    ex.Trials(n).Eye_prepro.dpsL = downsample(dpsL(eye_timing(n, 1):eye_timing(n, 2)), ds);
-    lenv = length(ex.Trials(n).Eye_prepro.psR);
-    ex.Trials(n).Eye_prepro.stpos = round((lenv*eye_timing(n, 3))/ex.Trials(n).Eye.n);
-    ex.Trials(n).Eye_prepro.enpos = round((lenv*eye_timing(n, 4))/ex.Trials(n).Eye.n);
+    ex.Trials(n).Eye_prepro.stpos = eye_timing(n, 3);
+    ex.Trials(n).Eye_prepro.enpos = eye_timing(n, 4);
+    ex.Trials(n).Eye_prepro.RX = eyeRX(eye_timing(n, 1):eye_timing(n, 2));
+    ex.Trials(n).Eye_prepro.RY = eyeRY(eye_timing(n, 1):eye_timing(n, 2));
+    ex.Trials(n).Eye_prepro.LX = eyeLX(eye_timing(n, 1):eye_timing(n, 2));
+    ex.Trials(n).Eye_prepro.LY = eyeLY(eye_timing(n, 1):eye_timing(n, 2));
+    ex.Trials(n).Eye_prepro.psR = psR(eye_timing(n, 1):eye_timing(n, 2));
+    ex.Trials(n).Eye_prepro.psL = psL(eye_timing(n, 1):eye_timing(n, 2));
+    ex.Trials(n).Eye_prepro.dpsR = dpsR(eye_timing(n, 1):eye_timing(n, 2));
+    ex.Trials(n).Eye_prepro.dpsL = dpsL(eye_timing(n, 1):eye_timing(n, 2));
 end
 
 % remove unnecessary fields
