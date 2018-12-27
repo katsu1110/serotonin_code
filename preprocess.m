@@ -69,11 +69,7 @@ for n = 1:N
     ex.Trials(n).LFP_prepro_time = time - t_frame(1);
         
     % reduce the lfp signal to the period of stimulus presentation
-    try
-        lfps_temp = interp1(t_lfp, ex.Trials(n).LFP, ex.Trials(n).LFP_prepro_time);
-    catch
-        keyboard
-    end
+    lfps_temp = interp1(t_lfp, ex.Trials(n).LFP, ex.Trials(n).LFP_prepro_time);
     lfps = [lfps, lfps_temp];
     
     % start and end of the trial
@@ -135,9 +131,9 @@ end
 
 % filtering ==================================
 % LFP =======================
-lfps = filtfilt(d, lfps);
-lfps = filtfilt(b_high, a_high, lfps);
-lfps = filtfilt(b_low, a_low, lfps);
+lfps = filter(b_high, a_high, lfps);
+lfps = filter(b_low, a_low, lfps);
+lfps = filter(d, lfps);
 
 % Pupil ======================
 psR = filter(bps, aps, psR);
