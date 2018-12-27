@@ -21,6 +21,11 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'filter'))
     savepath = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/LFPprepro/'];
     parfor i = 1:lene
         % filenames
+        if strcmp('Z:\data\mango\0132\ma_0132_c1_sortHN_all.grating.ORxRC.mat', exinfo(i).fname)
+            exinfo(i).fname = 'Z:\data\mango\0132\ma_0132_c1_sortHN_4.25PM.grating.ORxRC.mat';
+            exinfo(i).fname_drug = 'Z:\data\mango\0132\ma_0132_c1_sortHN_4.30PM.grating.ORxRC_5HT.mat';
+        end
+        
         slash = strfind(exinfo(i).fname, '\');
         fname = exinfo(i).fname(slash(end)+1:end);        
         slash = strfind(exinfo(i).fname_drug, '\');
