@@ -171,10 +171,7 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
     lenl = length(collab);
     ts = 0.3; % 3 tapers
     params = define_params(fs, ts, 0);
-    psf = 8;
-    if stmdur < 2
-        psf = 2;
-    end
+    psf = 2;
     for d = 1:2
         para.cond(d).collab = collab; 
         for i = 1:lenv            
@@ -213,8 +210,7 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
                 para.cond(d).mat{i}(n, 5) = max(lfpseg) - min(lfpseg);
                 
                 % CSD (second derivative of LFPs)
-                dlfp = [0 diff(lfpseg)];
-                para.cond(d).mat{i}(n, 6) = mean([0 diff(dlfp)]);
+                para.cond(d).mat{i}(n, 6) = mean([0 0 diff(diff(dlfp))]);
                 
                 % low-freq power
                 para.cond(d).mat{i}(n, 7) = nanmean(10*log10(S(f <= 10, n)), 1);
@@ -226,6 +222,35 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
             end
         end  
     end     
+end
+
+% Eye =============================================
+if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'eye'))
+    eyefields = {'RX', 'RY', 'LX', 'LY', 'psR', 'psL', 'dpsR', 'dpsL'};
+    leneye = length(eyefields);
+    for d = 1:2
+        for i = 1:lenv
+            nf = 10000;
+            for n = 1:para.cond(d).ntr(i)
+                nf_temp = para.cond(d).trials{i}(n).Eye_prepro.enpos - ...
+                    para.cond(d).trials{i}(n).Eye_prepro.stpos + 1;
+                if nf_temp < nf
+                    nf = nf_temp;
+                end
+            end
+        end
+    end
+    for d = 1:2
+        for i = 1:lenv
+            for n = 1:para.cond(d).ntr(i)
+                for e = 1:leneye
+                    para.cond(d).eye{i, e}(n, 1:nf) = ...
+                        para.cond(d).trials{i}(n).Eye_prepro.(eyefields{e})(...
+                        para.cond(d).trials{i}(n).Eye_prepro.stpos:para.cond(d).trials{i}(n).Eye_prepro.stpos + nf -1);
+                end
+            end
+        end
+    end    
 end
 
 % Spike-triggered LFP ====================

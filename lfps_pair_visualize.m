@@ -67,7 +67,7 @@ addpath(genpath([mypath '/Katsuhisa/code/integrated/matlab_usefulfunc']))
 stmdur = 0.45;
 switch datast{1}.stm.param
     case 'rc'
-%         % remocc outliers
+%         % remove outliers
 %         datast(1:3) = [];
 %         lists(1:3, :) = [];
         
@@ -124,7 +124,7 @@ switch datast{1}.stm.param
         end
 end
 
-% remocc no-data sessions
+% remove no-data sessions
 datast(stmidx(:,1)==0) = [];
 lists(stmidx(:,1)==0, :) = [];
 stmidx(stmidx(:,1)==0, :) = [];
@@ -390,6 +390,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'lfp'))==1
     j = j + 1;   
 end
 
+
 %%
 % GLM analysis ================================================
 if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
@@ -429,13 +430,15 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                 ]; 
 
             % k-fold cross-validation
-            cvidx = crossvalind('Kfold', ntr0+ntr2, cv);
+            cvidx1 = crossvalind('Kfold', ntr0, cv);
+            cvidx2 = crossvalind('Kfold', ntr2, cv);
+            cvidx = [cvidx1; cvidx2];
             vec = 1:cv;
             
             % fit GLM stepwise
 %             L = [];
             for m = 1:lenm
-                y = X(:, mdly(m));
+                y = -X(:, mdly(m));
 %                 if m < 3
 %                     % firing rate model
 %                     y = log(1+y);
@@ -447,20 +450,20 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                 for v = 1:cv
                     for k = 1:lenp(m)
                         % model prediction (stepwise)
-                        [B, FitInfo] = lassoglm(predictors(cvidx==v, 1:k), y(cvidx==v), 'normal', 'lambda', lam);
-                        beta = [FitInfo.Intercept; B];                        
+%                         [B, FitInfo] = lassoglm(predictors(cvidx==v, 1:k), y(cvidx==v), 'normal', 'lambda', lam);
+%                         beta = [FitInfo.Intercept; B];                        
+                        beta = glmfit(predictors(cvidx==v, 1:k), y(cvidx==v), 'normal');
                         ypred = glmval(beta, predictors(cvidx==vec(~ismember(vec, v)), 1:k), 'identity');
 
                         % correlation coefficient
-                        rr = corrcoef(y(cvidx==vec(~ismember(vec, v))), ypred);
-                        r_temp(v, k) = rr(1, 2)^2;                        
+                        r_temp(v, k) = varexp(y(cvidx==vec(~ismember(vec, v))), ypred);                        
                     end
 %                     L = [L, FitInfo.LambdaMinDeviance];
                     % weight
                     w_temp(v, :) = beta(2:end);              
                 end 
-                cc{m}(i, :) = mean(r_temp, 1);      
-                w{m}(i, :) = mean(w_temp, 1);
+                cc{m}(i, :) = nanmean(r_temp, 1);      
+                w{m}(i, :) = nanmean(w_temp, 1);
             end    
         end
 %         median(L)
@@ -551,7 +554,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                        hold on;
                    end
                    if a == 1 && k == 1
-                       title('variance explained')
+                       title('R^{2}')
                    end
                    set(gca, 'XTick', 1:lenp(m), 'XTickLabel', [])
                    yy = get(gca, 'YLim');
@@ -1274,7 +1277,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'coherence'))==1
                 for b = 1:lenb
                     subplot(lena*ndrug, lenb, b + lenb*(k-1) + ndrug*lenb*(a-1))
         %             disp(['circular ww test: ' 'drug; ' drugnames{k} ' ' bandnames{b}])
-                    [rx, ry] = nan_remocc_pair(rad{b, 1}, rad{b, 2}, 'mean');
+                    [rx, ry] = nan_remove_pair(rad{b, 1}, rad{b, 2}, 'mean');
                     [ppval, s_table] = circ_wwtest(rx, ry);
 %                     pdelta = circ_rad2ang(circ_mean(rad{b,1}) - circ_mean(rad{b,2}));
                     npval = circ_cmtest(rx, ry);

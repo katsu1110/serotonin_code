@@ -229,8 +229,10 @@ for i = 1:lenses
         spe_t = datast{i}.cond(1).spectrogram.t{1};
         lent = length(spe_t);
         spe_t = linspace(-0.1, stmdur, lent);
-        S1 = 10*log10(datast{i}.cond(1).spectrogram.S{stmidx(i, s)})';
-        S2 = 10*log10(datast{i}.cond(2).spectrogram.S{stmidx(i, s)})';
+%         S1 = 10*log10(datast{i}.cond(1).spectrogram.S{stmidx(i, s)})';
+%         S2 = 10*log10(datast{i}.cond(2).spectrogram.S{stmidx(i, s)})';
+        S1 = datast{i}.cond(1).spectrogram.S{stmidx(i, s)}';
+        S2 = datast{i}.cond(2).spectrogram.S{stmidx(i, s)}';
         freqc = datast{i}.cond(1).coherence.f{stmidx(i, s)};
         coh1 = datast{i}.cond(1).coherence.C{stmidx(i, s)};
         coh2 = datast{i}.cond(2).coherence.C{stmidx(i, s)};
@@ -251,11 +253,11 @@ for i = 1:lenses
             
             % response power ===========
             % base 
-            at(i, 28 + 3*(b-1), s) = at(i, 39 + 3*(b-1), s) - ...
-                nanmean(nanmean(S1(frange, spe_t < 0)));
+            at(i, 28 + 3*(b-1), s) = at(i, 10 + 3*(b-1), s) - ...
+                nanmean(nanmean(S1(frange, spe_t <= 0)));
             % drug 
-            at(i, 29 + 3*(b-1), s) = at(i, 40 + 3*(b-1), s) - ...
-                nanmean(nanmean(S2(frange, spe_t < 0)));
+            at(i, 29 + 3*(b-1), s) = at(i, 11 + 3*(b-1), s) - ...
+                nanmean(nanmean(S2(frange, spe_t <= 0)));
             % d
             at(i, 30 + 3*(b-1), s) = at(i, 28 + 3*(b-1), s) - at(i, 29 + 3*(b-1), s);            
             
@@ -282,9 +284,9 @@ for i = 1:lenses
         % d LFP res
         at(i, 84, s) = at(i, 82, s) - at(i, 83, s);  
         % LFP power ratio base 
-        at(i, 85, s) = at(i, 10 + 3*(1-1), s)/at(i, 10 + 3*(4-1), s);
+        at(i, 85, s) = at(i, 10 + 3*(5-1), s)/at(i, 10 + 3*(6-1), s);
         % LFP power ratio drug
-        at(i, 86, s) = at(i, 11 + 3*(1-1), s)/at(i, 11 + 3*(4-1), s);
+        at(i, 86, s) = at(i, 11 + 3*(5-1), s)/at(i, 11 + 3*(6-1), s);
         % d LFP power ratio
         at(i, 87, s) = at(i, 85, s) - at(i, 86, s);  
         
@@ -308,7 +310,9 @@ for i = 1:lenses
             ]; 
         
         % k-fold cross-validation
-        cvidx = crossvalind('Kfold', ntr0+ntr2, cv);
+        cvidx1 = crossvalind('Kfold', ntr0, cv);
+        cvidx2 = crossvalind('Kfold', ntr2, cv);
+        cvidx = [cvidx1; cvidx2];
         
         % full model fitting
         for m = 1:lenm

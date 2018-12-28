@@ -171,7 +171,7 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
     lenl = length(collab);
     ts = 0.3; % 3 tapers
     params = define_params(fs, ts, 0);
-    psf = 4;
+    psf = 8;
     if stmdur < 2
         psf = 2;
     end
@@ -198,13 +198,13 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
                 % mean pupil size
                 stpos = para.cond(d).trials{i}(n).Eye_prepro.stpos;
                 enpos = para.cond(d).trials{i}(n).Eye_prepro.enpos;
-                ps_temp = nanmean([para.cond(d).trials{i}(n).Eye_prepro.psR; ...
-                    para.cond(d).trials{i}(n).Eye_prepro.psL], 1);
+                ps_temp = nanmean([para.cond(d).trials{i}(n).Eye_prepro.psR(stpos:enpos); ...
+                    para.cond(d).trials{i}(n).Eye_prepro.psL(stpos:enpos)], 1);
                 para.cond(d).mat{i}(n, 3) = nanmean(ps_temp(end-round((enpos-stpos)/psf)+1:end));
                 
                 % pupil size derivative
-                ps_temp = nanmean([para.cond(d).trials{i}(n).Eye_prepro.dpsR; ...
-                    para.cond(d).trials{i}(n).Eye_prepro.dpsL], 1);
+                ps_temp = nanmean([para.cond(d).trials{i}(n).Eye_prepro.dpsR(stpos:enpos); ...
+                    para.cond(d).trials{i}(n).Eye_prepro.dpsL(stpos:enpos)], 1);
                 para.cond(d).mat{i}(n, 4) = max(ps_temp(end-round((enpos-stpos)/psf)+1:end));
                 
                 % lfp response
@@ -218,12 +218,47 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
                 
                 % low-freq power
                 para.cond(d).mat{i}(n, 7) = nanmean(10*log10(S(f <= 10, n)), 1);
+%                 para.cond(d).mat{i}(n, 7) = nanmean(S(f <= 10, n), 1);
                 
                 % gamma power
                 para.cond(d).mat{i}(n, 8) = nanmean(10*log10(S(f >= 40, n)), 1);
+%                 para.cond(d).mat{i}(n, 8) = nanmean(S(f >= 40, n), 1);
             end
         end  
     end     
+end
+
+% Eye =============================================
+if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'eye'))
+    eyefields = {'RX', 'RY', 'LX', 'LY', 'psR', 'psL', 'dpsR', 'dpsL'};
+    leneye = length(eyefields);
+    for d = 1:2
+        for i = 1:lenv
+            nf = 10000;
+            for n = 1:para.cond(d).ntr(i)
+                nf_temp = para.cond(d).trials{i}(n).Eye_prepro.enpos - ...
+                    para.cond(d).trials{i}(n).Eye_prepro.stpos + 1;
+                if nf_temp < nf
+                    nf = nf_temp;
+                end
+            end
+        end
+    end
+    for d = 1:2
+        for i = 1:lenv
+            nf = 10000;
+            for n = 1:para.cond(d).ntr(i)
+                for e = 1:leneye
+                    para.cond(d).eye{i, e}(n, 1:nf) = ...
+                        para.cond(d).trials{i}(n).Eye_prepro.(eyefie
+                nf_temp = para.cond(d).trials{i}(n).Eye_prepro.enpos - ...
+                    para.cond(d).trials{i}(n).Eye_prepro.stpos + 1;
+                if nf_temp < nf
+                    nf = nf_temp;
+                end
+            end
+        end
+    end    
 end
 
 % Spike-triggered LFP ====================
