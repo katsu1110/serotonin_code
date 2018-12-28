@@ -210,15 +210,15 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
                 para.cond(d).mat{i}(n, 5) = max(lfpseg) - min(lfpseg);
                 
                 % CSD (second derivative of LFPs)
-                para.cond(d).mat{i}(n, 6) = mean([0 0 diff(diff(dlfp))]);
+                para.cond(d).mat{i}(n, 6) = mean([0 0 diff(diff(lfpseg))]);
                 
                 % low-freq power
-                para.cond(d).mat{i}(n, 7) = nanmean(10*log10(S(f <= 10, n)), 1);
-%                 para.cond(d).mat{i}(n, 7) = nanmean(S(f <= 10, n), 1);
+%                 para.cond(d).mat{i}(n, 7) = nanmean(10*log10(S(f <= 10, n)), 1);
+                para.cond(d).mat{i}(n, 7) = nanmean(S(f <= 10, n), 1);
                 
                 % gamma power
-                para.cond(d).mat{i}(n, 8) = nanmean(10*log10(S(f >= 40, n)), 1);
-%                 para.cond(d).mat{i}(n, 8) = nanmean(S(f >= 40, n), 1);
+%                 para.cond(d).mat{i}(n, 8) = nanmean(10*log10(S(f >= 40, n)), 1);
+                para.cond(d).mat{i}(n, 8) = nanmean(S(f >= 40, n), 1);
             end
         end  
     end     

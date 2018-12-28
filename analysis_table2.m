@@ -284,9 +284,9 @@ for i = 1:lenses
         % d LFP res
         at(i, 84, s) = at(i, 82, s) - at(i, 83, s);  
         % LFP power ratio base 
-        at(i, 85, s) = at(i, 10 + 3*(5-1), s)/at(i, 10 + 3*(6-1), s);
+        at(i, 85, s) = at(i, 10 + 3*(5-1), s)/at(i, 10 + 3*(4-1), s);
         % LFP power ratio drug
-        at(i, 86, s) = at(i, 11 + 3*(5-1), s)/at(i, 11 + 3*(6-1), s);
+        at(i, 86, s) = at(i, 11 + 3*(5-1), s)/at(i, 11 + 3*(4-1), s);
         % d LFP power ratio
         at(i, 87, s) = at(i, 85, s) - at(i, 86, s);  
         

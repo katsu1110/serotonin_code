@@ -407,7 +407,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
         mdlout = {[6:11]};
         lenm = length(mdly);
         lenp = zeros(1, lenm);
-        cv = 5;
+        cv = 2;
         cc = cell(1, lenm);
         w = cell(1, lenm);
         lam = 0.084;
@@ -435,6 +435,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
             cvidx1 = crossvalind('Kfold', ntr0, cv);
             cvidx2 = crossvalind('Kfold', ntr2, cv);
             cvidx = [cvidx1; cvidx2];
+            vec = 1:cv;
             
             % fit GLM stepwise
 %             L = [];
@@ -453,11 +454,11 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                         % model prediction (stepwise)
 %                         [B, FitInfo] = lassoglm(predictors(cvidx==v, 1:k), y(cvidx==v), 'normal', 'lambda', lam);
 %                         beta = [FitInfo.Intercept; B];                        
-                        beta = glmfit(predictors(cvidx~=v, 1:k), y(cvidx~=v), 'normal');
-                        ypred = glmval(beta, predictors(cvidx==v, 1:k), 'identity');
+                        beta = glmfit(predictors(cvidx==v, 1:k), y(cvidx==v), 'normal');
+                        ypred = glmval(beta, predictors(cvidx==vec(~ismember(vec, v)), 1:k), 'identity');
 
                         % correlation coefficient
-                        rr = corrcoef(y(cvidx==v), ypred);
+                        rr = corrcoef(y(cvidx==vec(~ismember(vec, v))), ypred);
                         r_temp(v, k) = rr(1,2);
 %                         r_temp(v, k) = varexp(y(cvidx==vec(~ismember(vec, v))), ypred);                        
                     end
@@ -538,22 +539,22 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                                 barcol = paircol(4, :);
                            end
                            if me(p-1) > me(p) 
-                               bar(p, me(p-1), 'FaceColor', barcol, 'EdgeColor', 'k')
+                               bar(p, me(p-1), 'FaceColor', barcol, 'EdgeColor', 'w')
                                hold on;
                                bar(p, me(p), 'FaceColor', 'w', 'EdgeColor', 'w')
+                               hold on;
+                               plot([p-1 p], me(p-1)*[1 1], '-k')
                            else
-                               bar(p, me(p), 'FaceColor', barcol, 'EdgeColor', 'k')
+                               bar(p, me(p), 'FaceColor', barcol, 'EdgeColor', 'w')
                                hold on;
                                bar(p, me(p-1), 'FaceColor', 'w', 'EdgeColor', 'w')
                            end
-                           hold on;
-                           plot([p-1.4 p+0.4], me(p-1)*[1 1], '-k', 'linewidth', 0.25)
                        else
-                           pval = signrank(cc{m}(cond, p))
+                           pval = signrank(cc{m}(cond, p));
                            if pval < 0.05/lenp(m)
                                 barcol = paircol(4, :);
                            end
-                           bar(p, me(p), 'FaceColor', barcol, 'EdgeColor', 'k')
+                           bar(p, me(p), 'FaceColor', barcol, 'EdgeColor', 'w')
                        end
                        hold on;
                        errorbar(p, me(p), sem(p), 'color', barcol, 'capsize', 0)
