@@ -984,7 +984,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
                     mat{d}(nans, :) = [];
                     me = mean(mat{d}, 1);
                     sem = std(mat{d}, [], 1)/sqrt(lenses - length(nans));
-                    fill_between(freq, me - sem, me + sem, cols(d, :), 0.1)
+                    fill_between(freq, me - sem, me + sem, cols(d, :), 0.4)
                     hold on;
                     plot(freq, me, '-', 'color', cols(d, :))
                     hold on;                                
@@ -1010,6 +1010,8 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
 %                 sfreq = freq(freq >= 3 & freq <= 48);
                 yy_temp = get(gca, 'YLim');
                 yy_temp(2) = yy_temp(2)*1.1;
+                hold on;
+                plot([10 10], yy_temp, '-k')
 %                 start = 3;
 %                 for b = 1:length(sfreq)
 %                     % ttest
@@ -1030,7 +1032,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
                     if pval < 0.05/(2*lenb)    
                         disp([animals{a} ', ' bandnames{b} ', p = ' num2str(pval*lenb)])
                           pb = plot(bandrange{b}, [1 1]*yy_temp(2), ...
-                              '-', 'color', 0.5*[0 1 0], 'linewidth', 2);
+                              '-', 'color', [0.8000    0.9216    0.7725], 'linewidth', 2);
                           pb.Color(4) = 0.4;
                     end
                 end
@@ -1045,7 +1047,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
 %                 set(gca, 'YScale', 'log')
 %                 set(gca, 'XScale', 'log')
                 xlim([3 48])
-                set(gca, 'box', 'off', 'tickdir', 'out')
+                set(gca, 'box', 'off', 'tickdir', 'out', 'XScale', 'log')
                 if k==1
                     title(stmlab{s})            
                 end
@@ -1093,7 +1095,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
                     end
                 end
                 yy_temp = get(gca, 'YLim');
-                plot(freq, pbar*yy_temp(2), '-', 'color', 0.5*[1 1 1], 'linewidth', 3)
+                plot(freq, pbar*yy_temp(2), '-', 'color', [0.8000    0.9216    0.7725], 'linewidth', 3)
 
                 % format
                 if yy_temp(1) < yy{2}(1)
@@ -1135,8 +1137,11 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
                 end        
 
                 subplot(lena*ndrug, 3, 3 + 3*(k-1) + ndrug*3*(a-1))
-                imagesc(spe_t, freq, squeeze(nanmean(Sall(...
-                    cond, :, :, 1), 1)) - squeeze(nanmean(Sall(cond, :, :, 2), 1)));
+                S1 = squeeze(nanmean(Sall(cond, :, :, 1), 1));
+%                 S1 = S1 - repmat(nanmean(S1(:, spe_t <= 0), 2), 1, length(spe_t));
+                S2 = squeeze(nanmean(Sall(cond, :, :, 2), 1));
+%                 S2 = S2 - repmat(nanmean(S2(:, spe_t <= 0), 2), 1, length(spe_t));
+                imagesc(spe_t, freq, S1 - S2);
                 colormap(jet)
                 cl = caxis;
                 if cl(1) < clim{2}

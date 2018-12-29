@@ -87,7 +87,7 @@ for d = 1:2
 end
 
 % zscoring
-if z
+if z==1
     lfpall = []; psr = []; psl = []; dpsr = []; dpsl = [];
     for d = 1:2
         for i = 1:lenv    
@@ -111,8 +111,9 @@ for d = 1:2
     lenlfp = length(para.cond(d).trials{end}(end).(lfpfield));
     for i = 1:lenv    
         for n = 1:para.cond(d).ntr(i)
-            para.cond(d).lfpfull{i}(n, 1:lenlfp) = (...
+            para.cond(d).trials{i}(n).(lfpfield) = (...
                 para.cond(d).trials{i}(n).(lfpfield) - me(1))/sd(1);
+            para.cond(d).lfpfull{i}(n, 1:lenlfp) = para.cond(d).trials{i}(n).(lfpfield);
             para.cond(d).trials{i}(n).Eye_prepro.psR = (...
                 para.cond(d).trials{i}(n).Eye_prepro.psR - me(2))/sd(2);
             para.cond(d).trials{i}(n).Eye_prepro.psL = (...
