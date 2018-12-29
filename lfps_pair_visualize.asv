@@ -185,6 +185,83 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'thinning'))==1
     j = j + 1;
 end
 
+%%
+% pupil  ===========================
+if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'pupil'))==1
+    figure(j+1);
+    nf = 200;
+    for s = 1:ss
+        ps = zeros(lenses, nf, 2);
+        dp = zeros(lenses, nf, 2);
+        % data extraction
+        for i = 1:lenses
+            for d = 1:2
+                % both eyes
+                ps_temp = (datast{i}.cond(d).eye{stmidx(i, s), 5} + ...
+                    datast{i}.cond(d).eye{stmidx(i, s), 6})/2;
+                dp_temp = (datast{i}.cond(d).eye{stmidx(i, s), 7} + ...
+                    datast{i}.cond(d).eye{stmidx(i, s), 8})/2;
+                % zscore
+                ps_temp = (ps_temp - mean(ps_temp(:)))/std(ps_temp(:));
+                dp_temp = (dp_temp - mean(dp_temp(:)))/std(dp_temp(:));
+                % mean
+                me = mean(ps_temp, 1);
+                delta = nf - length(me);
+                ps(i, :, d) = [me, me(end-delta:end)];
+                dp(i, :, d) = mean(dp_temp(:, 1:nf), 1);
+            end
+        end
+        % visualize ===========================
+        for a = 1:lena
+            for k = 1:ndrug
+                % time-series ==========================
+                if a < 3
+                    cond = lists(:,2)==k-1 & lists(:,3)==a-1;
+                else
+                    cond = lists(:,2)==k-1;
+                end
+                
+                % plot
+                subplot(lena*ndrug, ss, s + ss*(k-1) + ndrug*ss*(a-1))
+                for d = 1:2
+                    % ps
+                    me = squeeze(nanmean(ps(cond, :, d), 1));
+                    sem = squeeze(nanstd(ps(cond, : ,d), [], 1))/sqrt(sum(cond));
+                    fill_between(1:nf, me-sem, me+sem, cols(d, :), 0.4)
+                    hold on;
+                    plot(1:nf, me, '-', 'color', cols(d, :))
+                    hold on;
+                    
+                    % dp
+                    me = squeeze(nanmean(dp(cond, :, d), 1));
+                    sem = squeeze(nanstd(dp(cond, : ,d), [], 1))/sqrt(sum(cond));
+                    fill_between(1:nf, me-sem, me+sem, cols(d, :), 0.4)
+                    hold on;
+                    plot(1:nf, me, '-', 'color', cols(d, :))
+                    hold on;
+                end        
+                
+                % format
+                xlim([0 nf])
+                yl = get(gca, 'YLim');
+                set(gca, 'XTick', [0 nf])
+                plot([0 0], yl, '--', 'color', 0.5*[1 1 1])
+                if k==1 && a==1
+                    title(stmlab{s})            
+                end
+                if s==1
+                    ylabel({animals{a}, pairnames{k, 2}, 'pupil'})
+                    if k == ndrug && a==lena
+                        xlabel('time after stimulus onset (sec)')  
+                    end
+                end
+            end
+        end
+    end
+    set(gcf, 'Name', 'pupil time-series', 'NumberTitle', 'off')
+    j = j + 1;   
+end
+
 % %%
 % % Synchronization index ==========================================
 % if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'si'))==1
@@ -407,7 +484,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
         mdlout = {[6:11]};
         lenm = length(mdly);
         lenp = zeros(1, lenm);
-        cv = 2;
+        cv = 5;
         cc = cell(1, lenm);
         w = cell(1, lenm);
         lam = 0.084;
@@ -435,7 +512,6 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
             cvidx1 = crossvalind('Kfold', ntr0, cv);
             cvidx2 = crossvalind('Kfold', ntr2, cv);
             cvidx = [cvidx1; cvidx2];
-            vec = 1:cv;
             
             % fit GLM stepwise
 %             L = [];
@@ -454,11 +530,11 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                         % model prediction (stepwise)
 %                         [B, FitInfo] = lassoglm(predictors(cvidx==v, 1:k), y(cvidx==v), 'normal', 'lambda', lam);
 %                         beta = [FitInfo.Intercept; B];                        
-                        beta = glmfit(predictors(cvidx==v, 1:k), y(cvidx==v), 'normal');
-                        ypred = glmval(beta, predictors(cvidx==vec(~ismember(vec, v)), 1:k), 'identity');
+                        beta = glmfit(predictors(cvidx~=v, 1:k), y(cvidx~=v), 'normal');
+                        ypred = glmval(beta, predictors(cvidx==v, 1:k), 'identity');
 
                         % correlation coefficient
-                        rr = corrcoef(y(cvidx==vec(~ismember(vec, v))), ypred);
+                        rr = corrcoef(y(cvidx==v), ypred);
                         r_temp(v, k) = rr(1,2);
 %                         r_temp(v, k) = varexp(y(cvidx==vec(~ismember(vec, v))), ypred);                        
                     end
@@ -539,22 +615,22 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                                 barcol = paircol(4, :);
                            end
                            if me(p-1) > me(p) 
-                               bar(p, me(p-1), 'FaceColor', barcol, 'EdgeColor', 'w')
+                               bar(p, me(p-1), 'FaceColor', barcol, 'EdgeColor', 'k')
                                hold on;
                                bar(p, me(p), 'FaceColor', 'w', 'EdgeColor', 'w')
-                               hold on;
-                               plot([p-1 p], me(p-1)*[1 1], '-k')
                            else
-                               bar(p, me(p), 'FaceColor', barcol, 'EdgeColor', 'w')
+                               bar(p, me(p), 'FaceColor', barcol, 'EdgeColor', 'k')
                                hold on;
                                bar(p, me(p-1), 'FaceColor', 'w', 'EdgeColor', 'w')
                            end
+                           hold on;
+                           plot([p-1.4 p+0.4], me(p-1)*[1 1], '-k', 'linewidth', 0.25)
                        else
-                           pval = signrank(cc{m}(cond, p));
+                           pval = signrank(cc{m}(cond, p))
                            if pval < 0.05/lenp(m)
                                 barcol = paircol(4, :);
                            end
-                           bar(p, me(p), 'FaceColor', barcol, 'EdgeColor', 'w')
+                           bar(p, me(p), 'FaceColor', barcol, 'EdgeColor', 'k')
                        end
                        hold on;
                        errorbar(p, me(p), sem(p), 'color', barcol, 'capsize', 0)
@@ -1742,6 +1818,16 @@ for i = 1:lenses
         % noise correlation
         datast{i}.cond(d).nc = smlinfo.paramat(sesidx(i), 9+d);
     end
+end
+
+function y = adjust_veclen(x, l)
+lenx = length(x);
+if lenx > l
+    y = x(1:l);
+elseif lenx < l
+    y = [x, x(end)*ones(1, l-lenx)];
+else
+    y = x;
 end
 
 function rad = maxcoh_rad(coh, rad)

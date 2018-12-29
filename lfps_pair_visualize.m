@@ -185,6 +185,82 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'thinning'))==1
     j = j + 1;
 end
 
+%%
+% pupil  ===========================
+if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'pupil'))==1
+    figure(j+1);
+    nf = 200;
+    for s = 1:ss
+        ps = zeros(lenses, nf, 2);
+        dp = zeros(lenses, nf, 2);
+        % data extraction
+        for i = 1:lenses
+            for d = 1:2
+                % both eyes
+                ps_temp = (datast{i}.cond(d).eye{stmidx(i, s), 5} + ...
+                    datast{i}.cond(d).eye{stmidx(i, s), 6})/2;
+                dp_temp = (datast{i}.cond(d).eye{stmidx(i, s), 7} + ...
+                    datast{i}.cond(d).eye{stmidx(i, s), 8})/2;
+                % zscore
+                ps_temp = (ps_temp - mean(ps_temp(:)))/std(ps_temp(:));
+                dp_temp = (dp_temp - mean(dp_temp(:)))/std(dp_temp(:));
+                % mean
+                ps(i, :, d) =  adjust_veclen(mean(ps_temp, 1), nf);
+                dp(i, :, d) = adjust_veclen(mean(dp_temp, 1), nf);
+            end
+        end
+        % visualize ===========================
+        for a = 1:lena
+            for k = 1:ndrug
+                % time-series ==========================
+                if a < 3
+                    cond = lists(:,2)==k-1 & lists(:,3)==a-1;
+                else
+                    cond = lists(:,2)==k-1;
+                end
+                
+                % plot
+                for d = 1:2
+                    subplot(lena*ndrug, 2*ss, s + 2*ss*(k-1) + ndrug*2*ss*(a-1))
+                    % ps
+                    me = squeeze(nanmean(ps(cond, :, d), 1));
+                    sem = squeeze(nanstd(ps(cond, : ,d), [], 1))/sqrt(sum(cond));
+                    fill_between(1:nf, me-sem, me+sem, cols(d, :), 0.4)
+                    hold on;
+                    plot(1:nf, me, '-', 'color', cols(d, :))
+                    hold on;
+                    
+                    subplot(lena*ndrug, 2*ss, s+1 + 2*ss*(k-1) + ndrug*2*ss*(a-1))
+                    % dp
+                    me = squeeze(nanmean(dp(cond, :, d), 1));
+                    sem = squeeze(nanstd(dp(cond, : ,d), [], 1))/sqrt(sum(cond));
+                    fill_between(1:nf, me-sem, me+sem, cols(d, :), 0.4)
+                    hold on;
+                    plot(1:nf, me, '-', 'color', cols(d, :))
+                    hold on;
+                end        
+                
+                % format
+                xlim([0 nf])
+                yl = get(gca, 'YLim');
+                set(gca, 'XTick', [0 nf])
+                plot([0 0], yl, '--', 'color', 0.5*[1 1 1])
+                if k==1 && a==1
+                    title(stmlab{s})            
+                end
+                if s==1
+                    ylabel({animals{a}, pairnames{k, 2}, 'pupil'})
+                    if k == ndrug && a==lena
+                        xlabel('time after stimulus onset (sec)')  
+                    end
+                end
+            end
+        end
+    end
+    set(gcf, 'Name', 'pupil time-series', 'NumberTitle', 'off')
+    j = j + 1;   
+end
+
 % %%
 % % Synchronization index ==========================================
 % if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'si'))==1
@@ -407,7 +483,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
         mdlout = {[6:11]};
         lenm = length(mdly);
         lenp = zeros(1, lenm);
-        cv = 5;
+        cv = 3;
         cc = cell(1, lenm);
         w = cell(1, lenm);
         lam = 0.084;
@@ -432,6 +508,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                 ]; 
 
             % k-fold cross-validation
+            rng(19891220);
             cvidx1 = crossvalind('Kfold', ntr0, cv);
             cvidx2 = crossvalind('Kfold', ntr2, cv);
             cvidx = [cvidx1; cvidx2];
@@ -439,7 +516,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
             % fit GLM stepwise
 %             L = [];
             for m = 1:lenm
-                y = X(:, mdly(m));
+                y = 10*log10(X(:, mdly(m)));
 %                 if m < 3
 %                     % firing rate model
 %                     y = log(1+y);
@@ -465,8 +542,9 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                     % weight
                     w_temp(v, :) = beta(2:end);              
                 end 
-                cc{m}(i, :) = nanmean(r_temp, 1);      
-                w{m}(i, :) = nanmean(w_temp, 1);
+                [cvscore, cvi] = max(r_temp(:, end));
+                cc{m}(i, :) = r_temp(cvi, :);      
+                w{m}(i, :) = w_temp(cvi, :);
             end    
         end
 %         median(L)
@@ -527,44 +605,47 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
 
                    % variance explained
                    subplot(lena*ndrug, 2*ss, 2 + 2*ss*(k-1) + ndrug*2*ss*(a-1))
-%                    waterfallchart4mat(cc{m}(cond, :))
+                   waterfallchart4mat(cc{m}(cond, :))
                    me = nanmean(cc{m}(cond, :), 1);
-                   sem = nanstd(cc{m}(cond, :), [], 1)/sqrt(sum(cond));
+%                    sem = nanstd(cc{m}(cond, :), [], 1)/sqrt(sum(cond));
                    for p = 1:lenp(m)
-                       barcol = paircol(3, :);
+%                        barcol = paircol(3, :);
                        if p > 1
                            pval = signrank(cc{m}(cond, p-1), cc{m}(cond, p));
                            if pval < 0.05/lenp(m)
-                                barcol = paircol(4, :);
+                               text(p, me(p)*1.1, '*')
+%                                 barcol = paircol(4, :);
                            end
-                           if me(p-1) > me(p) 
-                               bar(p, me(p-1), 'FaceColor', barcol, 'EdgeColor', 'k')
-                               hold on;
-                               bar(p, me(p), 'FaceColor', 'w', 'EdgeColor', 'w')
-                           else
-                               bar(p, me(p), 'FaceColor', barcol, 'EdgeColor', 'k')
-                               hold on;
-                               bar(p, me(p-1), 'FaceColor', 'w', 'EdgeColor', 'w')
-                           end
-                           hold on;
-                           plot([p-1.4 p+0.4], me(p-1)*[1 1], '-k', 'linewidth', 0.25)
+%                            if me(p-1) > me(p) 
+%                                bar(p, me(p-1), 'FaceColor', barcol, 'EdgeColor', 'k')
+%                                hold on;
+%                                bar(p, me(p), 'FaceColor', 'w', 'EdgeColor', 'w')
+%                            else
+%                                bar(p, me(p), 'FaceColor', barcol, 'EdgeColor', 'k')
+%                                hold on;
+%                                bar(p, me(p-1), 'FaceColor', 'w', 'EdgeColor', 'w')
+%                            end
+%                            hold on;
+%                            plot([p-1.4 p+0.4], me(p-1)*[1 1], '-k', 'linewidth', 0.25)
                        else
-                           pval = signrank(cc{m}(cond, p))
+                           pval = signrank(cc{m}(cond, p));
                            if pval < 0.05/lenp(m)
-                                barcol = paircol(4, :);
+                               text(p, me(p)*1.1, '*')
+%                                 barcol = paircol(4, :);
                            end
-                           bar(p, me(p), 'FaceColor', barcol, 'EdgeColor', 'k')
+%                            bar(p, me(p), 'FaceColor', barcol, 'EdgeColor', 'k')
                        end
-                       hold on;
-                       errorbar(p, me(p), sem(p), 'color', barcol, 'capsize', 0)
-                       hold on;
+%                        hold on;
+%                        errorbar(p, me(p), sem(p), 'color', barcol, 'capsize', 0)
+%                        hold on;
                    end
                    if a == 1 && k == 1
                        title('correlation coefficient')
                    end
                    set(gca, 'XTick', 1:lenp(m), 'XTickLabel', [])
                    yy = get(gca, 'YLim');
-                   ylim([floor(0.7*me(1)) yy(2)])
+                  yy(2) = 0.4; 
+                  ylim([floor(0.7*me(1)) yy(2)])
                    set(gca, 'box', 'off', 'tickdir', 'out')
                    if k == ndrug
                        if a == lena
@@ -1740,6 +1821,18 @@ for i = 1:lenses
         
         % noise correlation
         datast{i}.cond(d).nc = smlinfo.paramat(sesidx(i), 9+d);
+    end
+end
+
+function y = adjust_veclen(x, l)
+lenx = length(x);
+if lenx > l
+    y = x(1:l);
+else
+    try
+        y = [x, x(end)*ones(1, l-lenx)];
+    catch
+        y = [x; x(end)*ones(1, l-lenx)];
     end
 end
 
