@@ -13,7 +13,7 @@ end
 frange = [3 90];
 win = movingwin(1)*Fs;
 step = movingwin(2)*Fs;
-folderName = '../../../LFP_project/Data/IRASAprepro/';
+folderName = '../../LFP_project/Data/IRASAprepro/';
 T = length(ex.Trials(end).LFP_prepro_time);
 ntr = length(ex.Trials);
 
