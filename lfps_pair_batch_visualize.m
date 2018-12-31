@@ -140,12 +140,12 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'fr'))==1
         for i = 1:lenses
             subplot(nrow, ncol, i)
             for d = 1:2
-                vec = datast{i}.cond(d).lfprel.mat{end}(:,1);
+                vec = datast{i}.cond(d).mat{end}(:,1);
                 trt = length(vec);
-%                 me = mean(vec);
+                me = mean(vec);
                 vec = locdetrend(vec, 1, [20, 1]);
-                vec = vec - mean(vec);
-%                 vec = vec - mean(vec) + me;
+%                 vec = vec - mean(vec);
+                vec = vec - mean(vec) + me;
 %                 vec(vec < 0) = 0;
 %                 vec = filter(b1, a1, vec);
                 plot(1:trt, vec, '.', 'color', cols(d, :))
