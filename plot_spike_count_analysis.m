@@ -176,7 +176,12 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
 %         lam = 0.084;
     for i = 1:lenses
         % firing rate order
-        [~, sortidx] = sort(Trmat.LFP_prepro{5}.cond(1).spk_tu{1}(:, 1));
+        ss = length(datast{i}.cond(1).mat);
+        fr = zeros(1, ss);
+        for s = 1:ss
+            fr(s) = nanmean(datast{i}.cond(1).mat{s}(:, 1));
+        end
+        [~, sortidx] = sort(fr);
         X = cell(1, 2);
         ntrall = [0, 0];
         for d = 1:2 % base or drug
@@ -339,7 +344,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                end
                set(gca, 'XTick', 1:lenp(m), 'XTickLabel', [])
                yy = get(gca, 'YLim');
-              yy(2) = 0.45; 
+              yy(2) =yy(2)*1.1; 
               ylim([floor(0.7*me(1)) yy(2)])
                set(gca, 'box', 'off', 'tickdir', 'out')
                if k == ndrug
