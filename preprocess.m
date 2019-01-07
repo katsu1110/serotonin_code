@@ -35,6 +35,7 @@ d = designfilt('bandstopiir','FilterOrder',notchord, ...
 
 % loop to get data ==================================
 ex.Trials = ex.Trials(label_seq > 0);
+label_seq = label_seq(label_seq > 0);
 N = length(ex.Trials);
 
 % remove trials with no lfp or eye data
@@ -61,6 +62,9 @@ dpsL = [];
 lfps_timing = ones(N, 2);
 eye_timing = ones(N, 4);
 for n = 1:N    
+    % label seq ==========
+    ex.Trials(n).label_seq = label_seq(n);
+    
     % LFP ================================
     % timing information for LFP
     t_frame = ex.Trials(n).Start - ex.Trials(n).TrialStart; % time of frame onsets
@@ -175,6 +179,7 @@ rmf = {'Eye', 'LFP'};
 for i = 1:length(rmf)
     ex.Trials = rmfield(ex.Trials, rmf{i});
 end
+ex = rmfield(ex, 'LPF');
 
 %%
 % remove stimulus-driven component (mean subtraction)

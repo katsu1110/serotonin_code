@@ -51,7 +51,9 @@ exs = {ex0, ex2};
 for d = 1:2
     % pupil vals
     for p = 1:length(exs{d}.Trials)
-        if exs{d}.Trials(p).label_seq == ex0.exp.StimPerTrial
+        if exs{d}.Trials(p).label_seq ~= ex0.exp.StimPerTrial
+            exs{d}.Trials(p).ps_metric = nan(1, 2);
+        else
             % mean pupil size
             stpos = exs{d}.Trials(p).Eye_prepro.stpos;
             enpos = exs{d}.Trials(p).Eye_prepro.enpos;
@@ -59,20 +61,18 @@ for d = 1:2
                 exs{d}.Trials(p).Eye_prepro.psL(stpos:enpos)], 1);
                 
             % pupil size derivative
-            dp_temp = nanmean([exs{d}.Trials(p).Eye_prepro.dpsR(stpos:enpos); ...
+            dps_temp = nanmean([exs{d}.Trials(p).Eye_prepro.dpsR(stpos:enpos); ...
                 exs{d}.Trials(p).Eye_prepro.dpsL(stpos:enpos)], 1);
-            if ex0.exp.StimPerTrial==1                
-                exs{d}.Trials(p).psvals(1) = nanmean(ps_temp(end-round((enpos-stpos)/2)+1:end));               
-                exs{d}.Trials(p).psvals(2) = max(dp_temp(end-round((enpos-stpos)/2)+1:end));
+            if ex0.exp.StimPerTrial==1
+                
+                exs{d}.Trials(p).psvals(1) = nanmean(ps_temp(end-round((enpos-stpos)/2)+1:end));
+                
+                
+                exs{d}.Trials(p).psval(2) = max(ps_temp(end-round((enpos-stpos)/2)+1:end));
             else
-                exs{d}.Trials(p).psvals(1) = nanmean(ps_temp);               
-                exs{d}.Trials(p).psvals(2) = max(dp_temp);       
-                for l = 1:3
-                    exs{d}.Trials(p-l).psvals = exs{d}.Trials(p).psvals;
-                end
+                
+                
             end
-        else
-            exs{d}.Trials(p).psvals = nan(1, 2);
         end        
     end
 
@@ -200,6 +200,7 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
     lenl = length(collab);
     ts = 0.3; % 3 tapers
     params = define_params(fs, ts, 0);
+    psf = 2;
     for d = 1:2
         para.cond(d).collab = collab; 
         for i = 1:lenv            
@@ -221,10 +222,16 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
                 para.cond(d).mat{i}(n, 2) = spc0(n);
                 
                 % mean pupil size
-                para.cond(d).mat{i}(n, 3) = para.cond(d).trials{i}(n).psvals(1);
+                stpos = para.cond(d).trials{i}(n).Eye_prepro.stpos;
+                enpos = para.cond(d).trials{i}(n).Eye_prepro.enpos;
+                ps_temp = nanmean([para.cond(d).trials{i}(n).Eye_prepro.psR(stpos:enpos); ...
+                    para.cond(d).trials{i}(n).Eye_prepro.psL(stpos:enpos)], 1);
+                para.cond(d).mat{i}(n, 3) = nanmean(ps_temp(end-round((enpos-stpos)/psf)+1:end));
                 
                 % pupil size derivative
-                para.cond(d).mat{i}(n, 4) = para.cond(d).trials{i}(n).psvals(2);
+                ps_temp = nanmean([para.cond(d).trials{i}(n).Eye_prepro.dpsR(stpos:enpos); ...
+                    para.cond(d).trials{i}(n).Eye_prepro.dpsL(stpos:enpos)], 1);
+                para.cond(d).mat{i}(n, 4) = max(ps_temp(end-round((enpos-stpos)/psf)+1:end));
                 
                 % lfp response
                 lfpseg = para.cond(d).trials{i}(n).(lfpfield)(para.cond(d).trials{i}(n).LFP_prepro_time > 0 ...

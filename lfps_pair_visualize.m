@@ -486,7 +486,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
         cv = 3;
         cc = cell(1, lenm);
         w = cell(1, lenm);
-        lam = 0.084;
+%         lam = 0.084;
         for i = 1:lenses
             % x and Y
             mat0 = datast{i}.cond(1).mat{stmidx(i, end)};
