@@ -51,29 +51,31 @@ exs = {ex0, ex2};
 for d = 1:2
     % pupil vals
     for p = 1:length(exs{d}.Trials)
-        if exs{d}.Trials(p).label_seq == ex0.exp.StimPerTrial
-            % mean pupil size
-            stpos = exs{d}.Trials(p).Eye_prepro.stpos;
-            enpos = exs{d}.Trials(p).Eye_prepro.enpos;
-            ps_temp = nanmean([exs{d}.Trials(p).Eye_prepro.psR(stpos:enpos); ...
-                exs{d}.Trials(p).Eye_prepro.psL(stpos:enpos)], 1);
-                
-            % pupil size derivative
-            dp_temp = nanmean([exs{d}.Trials(p).Eye_prepro.dpsR(stpos:enpos); ...
-                exs{d}.Trials(p).Eye_prepro.dpsL(stpos:enpos)], 1);
-            if ex0.exp.StimPerTrial==1                
-                exs{d}.Trials(p).psvals(1) = nanmean(ps_temp(end-round((enpos-stpos)/2)+1:end));               
-                exs{d}.Trials(p).psvals(2) = max(dp_temp(end-round((enpos-stpos)/2)+1:end));
-            else
-                exs{d}.Trials(p).psvals(1) = nanmean(ps_temp);               
-                exs{d}.Trials(p).psvals(2) = max(dp_temp);       
-                for l = 1:3
-                    exs{d}.Trials(p-l).psvals = exs{d}.Trials(p).psvals;
+        % mean pupil size
+        stpos = exs{d}.Trials(p).Eye_prepro.stpos;
+        enpos = exs{d}.Trials(p).Eye_prepro.enpos;
+        ps_temp = nanmean([exs{d}.Trials(p).Eye_prepro.psR(stpos:enpos); ...
+            exs{d}.Trials(p).Eye_prepro.psL(stpos:enpos)], 1);
+
+        % pupil size derivative
+        dp_temp = nanmean([exs{d}.Trials(p).Eye_prepro.dpsR(stpos:enpos); ...
+            exs{d}.Trials(p).Eye_prepro.dpsL(stpos:enpos)], 1);
+
+        % assign
+        if ex0.exp.StimPerTrial==1                
+            exs{d}.Trials(p).psvals(1) = nanmean(ps_temp(end-round((enpos-stpos)/2)+1:end));               
+            exs{d}.Trials(p).psvals(2) = max(dp_temp(end-round((enpos-stpos)/2)+1:end));
+        else
+            exs{d}.Trials(p).psvals(1) = nanmean(ps_temp);               
+            exs{d}.Trials(p).psvals(2) = max(dp_temp);       
+            if exs{d}.Trials(p).label_seq > 1
+                for l = 1:exs{d}.Trials(p).label_seq-1
+                    if exs{d}.Trials(p-l).label_seq < exs{d}.Trials(p-l+1).label_seq
+                        exs{d}.Trials(p-l).psvals = exs{d}.Trials(p).psvals;
+                    end
                 end
             end
-        else
-            exs{d}.Trials(p).psvals = nan(1, 2);
-        end        
+        end
     end
 
     % initialization
