@@ -155,6 +155,8 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'fr'))==1
     j = j + 1;
 end
 
+
+
 %%
 % GLM analysis ================================================
 if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
