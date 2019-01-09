@@ -175,7 +175,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
     cv = 3;
     cc = cell(1, lenm);
     w = cell(1, lenm);
-%         lam = 0.084;
+    lam = 0.084;
     for i = 1:lenses
         % firing rate order
         ss = length(datast{i}.cond(1).mat);
@@ -230,9 +230,9 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
             for v = 1:cv
                 for k = 1:lenp(m)
                     % model prediction (stepwise)
-%                         [B, FitInfo] = lassoglm(predictors(cvidx==v, 1:k), y(cvidx==v), 'normal', 'lambda', lam);
-%                         beta = [FitInfo.Intercept; B];                        
-                    beta = glmfit(predictors(cvidx~=v, 1:k), y(cvidx~=v), 'normal');
+                    [B, FitInfo] = lassoglm(predictors(cvidx~=v, 1:k), y(cvidx~=v), 'normal', 'lambda', lam);
+                    beta = [FitInfo.Intercept; B];                        
+%                     beta = glmfit(predictors(cvidx~=v, 1:k), y(cvidx~=v), 'normal');
                     ypred = glmval(beta, predictors(cvidx==v, 1:k), 'identity');
 
                     % correlation coefficient

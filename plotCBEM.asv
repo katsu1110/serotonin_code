@@ -115,50 +115,25 @@ nrow = floor(sqrt(lenses));
 ncol = ceil(lenses/nrow);
 for i = 1:lenses
     for d = 1:2
-        % color
-        if d==1
-            col = 'k';
-        else
-            if lists(i, 2) == 0
-                col = 'b';
-            else
-                col = 'r';
-            end
-        end
-        
         % E filter
         figure(f);
         subplot(nrow, ncol, i)
         hold on
-        plot([1:size(mat_e_ses, 2)]*cbem.cond(d).results{i}.dt*1e3, squeeze(mat_e_ses(i, :, d)), 'color', col)
+        me = mean(mat_e, 1);
+        sem = std(mat_e, [], 1)/sqrt(size(mat_e, 1));
+        fill_between([1:size(mat_e, 2)]*cbem.cond(d).results{1}.dt*1e3, me-sem, me+sem, cols(d, :), 0.5)
+        hold on;
+        plot([1:size(mat_e_ses, 2)]*cbem.cond(d).results{i}.dt*1e3, squeeze(mat_e_ses, 'color', cols(d, :))
         
         % I filter
         figure(f+1);
         subplot(nrow, ncol, i)
-        hold on
-        plot([1:size(mat_i_ses, 2)]*cbem.cond(d).results{i}.dt*1e3, squeeze(mat_i_ses(i, :, d)), 'color', col)
         
         % H filter
         figure(f+2);
         subplot(nrow, ncol, i)
-        hold on
-        plot([1:size(mat_h_ses, 2)]*cbem.cond(d).results{i}.dt*1e3, squeeze(mat_h_ses(i, :, d)), 'color', col)
-    end
-    for j = 1:3
-        figure(f+j-1);
-        subplot(nrow, ncol, i)
-        title(fname2title(fnames{i}{2}), 'fontsize', 7)
-        set(gca, 'box', 'off', 'tickdir', 'out')
+        
     end
 end
-figure(f);
-set(gcf, 'Name', 'excitatory filter', 'NumberTitle', 'off')
-figure(f+1);
-set(gcf, 'Name', 'inhibitory filter', 'NumberTitle', 'off')
-figure(f+2);
-set(gcf, 'Name', 'history filter', 'NumberTitle', 'off')
-f = f + 3;
 
-function tlab = fname2title(fname)
-dotpos = strfind(fname, '.');
-tlab = [fname(1:3) fname(dotpos(end-1)+1:dotpos(end)-1)];
+
