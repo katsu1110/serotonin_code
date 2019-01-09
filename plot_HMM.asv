@@ -62,29 +62,19 @@ for i = 1:lenses
         % variance explained by HMM
         variance_explained(i, d) = hmms.cond(d).results{i}.hmm.variance_explained;
         % time-constant for off duration
-        try
-            pd = fitdist(hmms.cond(d).results{i}.hmm.state(idx(1)).duration', 'Exponential');
-            tau(i, 1, d) = pd(1).mu;
-        catch
-            tau(i, 1, d) = 0;
-        end
-        
+        pd = fitdist(hmms.cond(d).results{i}.hmm.state(idx(1)).duration', 'Exponential');
+        tau(i, 1, d) = pd(1).mu;
         % time-constant for on duration
-        try 
-            pd = fitdist(hmms.cond(d).results{i}.hmm.state(idx(2)).duration', 'Exponential');
-            tau(i, 2, d) = pd(1).mu;
-        catch
-            tau(i, 2, d) = 0;
-        end
+        pd = fitdist(hmms.cond(d).results{i}.hmm.state(idx(2)).duration', 'Exponential');
+        tau(i, 2, d) = pd(1).mu;
     end
 end
 
 % visualization ===============================================
 close all;
-% cols = [0 0 0; 1 0 0];
+cols = [0 0 0; 1 0 0];
 
 f = 1;
-figure(f);
 
 % average time-course
 for a = 1:lena % animals
@@ -94,24 +84,15 @@ for a = 1:lena % animals
         else
             cond = find(lists(:,2)==k-1);
         end
+        figure(f);
 
         % mean duration (off)
         subplot(lena*2, 5, 1 + 5*(k-1) + 10*(a-1))
         unity_scatter(squeeze(mean_dur(cond, 1, 1)), squeeze(mean_dur(cond, 1, 2)))
-        if k==2
-            xlabel('base')
-            ylabel('drug')
-            title('off duration')
-        end
         
         % mean duration (on)
         subplot(lena*2, 5, 2 + 5*(k-1) + 10*(a-1))
         unity_scatter(squeeze(mean_dur(cond, 2, 1)), squeeze(mean_dur(cond, 2, 2)))
-        if k==2
-            xlabel('base')
-            ylabel('drug')
-            title('on duration')
-        end
         
         % mean vs SD
         subplot(lena*2, 5, 3 + 5*(k-1) + 10*(a-1))
@@ -122,29 +103,15 @@ for a = 1:lena % animals
         ncond = length(cond);
         lab = [ones(ncond, 1); 2*ones(ncond, 1); 3*ones(ncond, 1); 4*ones(ncond, 1)];
         ls_scatter(me, sd, lab)
-        if k==2
-            xlabel('mean duration')
-            ylabel('SD duration')
-            title('off_{base}, off_{drug}, on_{base}, on_{drug}')
-        end
         
         % tau (off)
-        subplot(lena*2, 5, 4 + 5*(k-1) + 10*(a-1))
-        unity_scatter(squeeze(tau(cond, 1, 1)), squeeze(tau(cond, 1, 2)))
-        if k==2
-            xlabel('base')
-            ylabel('drug')
-            title('tau (off)')
-        end
+        subplot(lena*2, 5, 1 + 5*(k-1) + 10*(a-1))
+        unity_scatter(squeeze(mean_dur(cond, 1, 1)), squeeze(mean_dur(cond, 1, 2)))
         
         % tau (on)
-        subplot(lena*2, 5, 5 + 5*(k-1) + 10*(a-1))
-        unity_scatter(squeeze(tau(cond, 2, 1)), squeeze(tau(cond, 2, 2)))
-        if k==2
-            xlabel('base')
-            ylabel('drug')
-            title('tau (on)')
-        end
+        subplot(lena*2, 5, 2 + 5*(k-1) + 10*(a-1))
+        unity_scatter(squeeze(mean_dur(cond, 2, 1)), squeeze(mean_dur(cond, 2, 2)))
+        
     end
 end
 
