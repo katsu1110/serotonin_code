@@ -42,10 +42,12 @@ for i = 1:ntr
     ex.Trials(i).(spkfield) = ex.Trials(i).(spkfield) - t_strt(1);
     begin = [0, 1];
     for t = 1:ntb
-        if sum(ex.Trials(i).(spkfield) >= begin(1) & ...
-            ex.Trials(i).(spkfield) <= begin(1) + dt)
-            spikec(i, t) = 1;
-        end
+%         if sum(ex.Trials(i).(spkfield) >= begin(1) & ...
+%             ex.Trials(i).(spkfield) <= begin(1) + dt)
+%             spikec(i, t) = 1;
+%         end
+        spikec(i, t) = sum(ex.Trials(i).(spkfield) >= begin(1) & ...
+            ex.Trials(i).(spkfield) <= begin(1) + dt);
         if begin(1) > begin(2)/rf
             begin(2) = begin(2) + 1;
         end

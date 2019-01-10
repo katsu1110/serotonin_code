@@ -2302,8 +2302,8 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'hmm'))
             d2 = load([loadpath lfplist{i}{2}], 'ex');
             
             % analysis
-            Out1{i} = fitHMM_dataset(d0.ex, 0.01, 'or_seq', 'oSpikes', [0.8 0]);
-            Out2{i} = fitHMM_dataset(d2.ex, 0.01, 'or_seq', 'oSpikes', [0.8 0]);
+            Out1{i} = fitHMM_dataset(d0.ex, [0.05, 0.005], 'or_seq', 'oSpikes', [0.8 0]);
+            Out2{i} = fitHMM_dataset(d2.ex, [0.05, 0.005], 'or_seq', 'oSpikes', [0.8 0]);
             clc
             
             % stimlus type
