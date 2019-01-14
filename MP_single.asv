@@ -13,8 +13,8 @@ function MP_single(ex, internal, filename)
 % preset parameters
 Fs = 1000; % sampling frequency
 mypath = cd;
-stridx = strfind(mypath, 'LFP_project');
-folderName = [mypath(1:stridx+10) '/Data/MPprepro_RC/'];
+stridx = 
+folderName = '../LFP_project/Data/MPprepro/';
 max_iter = 100;
 wrap = 1; % if 1, it does not work...
 L = 4096; % 2^N
@@ -42,7 +42,7 @@ idxs = ones(1, ntr);
 for k = 1:ntr
     % padding and mean subtraction for signal processing
     [z, idxs(k)] = padding(ex.Trials(k).(lfpfield), L);
-    inputSignal(:, k) = z - nanmean(z);
+    inputSignal(:, k) = z - mean(z);
 end
 
 % MP =========================
@@ -85,11 +85,10 @@ disp([filename ' saved after MP!'])
 
 % subfunction
 function [b, pre] = padding(a, L)
-% add padding for signal processing 
+% add padding for signal processing
 lena = length(a);
 b = zeros(1, L);
 pre = floor((L - lena)/2) + 1;
-me = nanmean(a);
-b(1:pre-1) = me;
+b(1:pre-1) = a(1);
 b(pre:pre+lena-1) = a;
-b(pre+lena:end) = me;
+b(pre+lena:end) = a(end);

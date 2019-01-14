@@ -59,26 +59,40 @@ end
 
 
 % MP preprocessing (stimulus response) =========================
-if sum(strcmp(type, 'all')) || sum(strcmp(type,  'MP0'))
+if sum(strcmp(type, 'all')) || sum(strcmp(type,  'MP'))
     % path
     addpath(genpath([mypath '/Katsuhisa/code/integrated/MP']))
     
     % load data and lists
-    loadpath = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/LFPprepro/'];
-    a = load([loadpath 'lfplist.mat'], 'lfplist');
-    lfplist = a.lfplist;
-    N = length(lfplist);
-    for i = 1:N
-        try
-            % load data
-            base = load([loadpath lfplist{i}{1}], 'ex');
-            drug = load([loadpath lfplist{i}{2}], 'ex');
+    a = load([mypath '/Katsuhisa/serotonin_project/dataset/Data/exinfo.mat'], 'exinfo');
+    exinfo = a.exinfo;
+    lene = length(exinfo);
+    N = lene;
+    for i = 1:N   
+        % filenames
+        if strcmp('Z:\data\mango\0132\ma_0132_c1_sortHN_all.grating.ORxRC.mat', exinfo(i).fname)
+            exinfo(i).fname = 'Z:\data\mango\0132\ma_0132_c1_sortHN_4.25PM.grating.ORxRC.mat';
+            exinfo(i).fname_drug = 'Z:\data\mango\0132\ma_0132_c1_sortHN_4.30PM.grating.ORxRC_5HT.mat';
+        end
+        slash = strfind(exinfo(i).fname_drug, '\');
+        fname_drug = exinfo(i).fname_drug(slash(end)+1:end);        
+        
+        if contains(fname_drug, 'xRC') % RC only
+            try
+                % baseline 
+                ex0 = loadCluster(exinfo(i).fname, 'loadlfp', 1, ...
+                    'filtering', 0);        
 
-            % perform MP & save the ex
-            MP_single(base.ex, 0, lfplist{i}{1});
-            MP_single(drug.ex, 0, lfplist{i}{2});
-        catch
-            disp(['session ' num2str(i) ' error'])
+                % drug
+                ex2 = loadCluster(exinfo(i).fname_drug, 'loadlfp', 1, ...
+                     'filtering', 0);
+            
+                % perform MP & save the ex
+                MP_single(ex0, 0, lfplist{i}{1});
+                MP_single(ex2, 0, lfplist{i}{2});
+            catch
+                disp(['Err: ' fname_drug])
+            end
         end
     end
 end

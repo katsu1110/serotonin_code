@@ -5,7 +5,8 @@ function ex = loadCluster(fname, varargin)
 %% define variables and parse input
 rew_flag = 1; % rewarded trials only
 ocul = nan; % occularity condition
-lfp_flag = true; % combines the spike and LFP file and preprocesses the lfp 
+lfp_flag = true; % combines the spike and LFP file and preprocesses the lfp
+filtering = 1;
 savepath = nan;
 j = 1;
 
@@ -17,6 +18,8 @@ while j<=length(varargin)
             ocul = varargin{j+1};
         case 'loadlfp'
             lfp_flag = varargin{j+1};
+        case 'filtering'
+            filtering = varargin{j+1};
         case 'save'
             savepath = varargin{j+1};
     end
@@ -116,7 +119,7 @@ if ~isnan(ocul); ex.Trials = ex.Trials([ex.Trials.me] == ocul); end
 % signal immediately
 if isfield(ex.Trials, 'LFP')
 %     ex = frequAnalysis(ex, varargin{:}); 
-    ex = preprocess(ex);
+    ex = preprocess(ex, filtering);
 end
 
 %%
