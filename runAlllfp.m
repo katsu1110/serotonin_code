@@ -74,11 +74,13 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'MP'))
             exinfo(i).fname = 'Z:\data\mango\0132\ma_0132_c1_sortHN_4.25PM.grating.ORxRC.mat';
             exinfo(i).fname_drug = 'Z:\data\mango\0132\ma_0132_c1_sortHN_4.30PM.grating.ORxRC_5HT.mat';
         end
+        slash = strfind(exinfo(i).fname, '\');
+        fname = exinfo(i).fname(slash(end)+1:end);   
         slash = strfind(exinfo(i).fname_drug, '\');
         fname_drug = exinfo(i).fname_drug(slash(end)+1:end);        
         
         if contains(fname_drug, 'xRC') % RC only
-            try
+%             try
                 % baseline 
                 ex0 = loadCluster(exinfo(i).fname, 'loadlfp', 1, ...
                     'filtering', 0);        
@@ -88,11 +90,11 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'MP'))
                      'filtering', 0);
             
                 % perform MP & save the ex
-                MP_single(ex0, 0, lfplist{i}{1});
-                MP_single(ex2, 0, lfplist{i}{2});
-            catch
-                disp(['Err: ' fname_drug])
-            end
+                MP_single(ex0, 0, fname);
+                MP_single(ex2, 0, fname_drug);
+%             catch
+%                 disp(['Err: ' fname_drug])
+%             end
         end
     end
 end

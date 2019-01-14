@@ -1,4 +1,4 @@
-function para = pair_stmLFP4mp(ex0, ex2, exn0, exn2, lfpfield, thin, analysis)
+function para = pair_stmLFP4mp(ex0, ex2, exn0, exn2, lfpfield, thin, analysis, z)
 %%
 % LFP analysis by stimulus type with a pair of sessions
 % INPUT: ex0, ex2 ... ex file after 'loadCluster.m'
@@ -115,6 +115,46 @@ for d = 1:2
             para.cond(d).trials{i}(n).energy = mptrs(n).energy;
             para.cond(d).lfpfull{i}(n, 1:length(para.cond(d).trials{i}(n).(lfpfield))) = ...
                 para.cond(d).trials{i}(n).(lfpfield);
+        end
+    end
+end
+
+% zscoring
+if z==1
+    lfpall = []; psr = []; psl = []; dpsr = []; dpsl = [];
+    for d = 1:2
+        for i = 1:lenv    
+            for n = 1:para.cond(d).ntr(i)
+                lfpall = [lfpall, para.cond(d).trials{i}(n).(lfpfield)];
+                stpos = para.cond(d).trials{i}(n).Eye_prepro.stpos;
+                enpos = para.cond(d).trials{i}(n).Eye_prepro.enpos;
+                psr = [psr, para.cond(d).trials{i}(n).Eye_prepro.psR(stpos:enpos)];
+                psl = [psl, para.cond(d).trials{i}(n).Eye_prepro.psL(stpos:enpos)];
+                dpsr = [dpsr, para.cond(d).trials{i}(n).Eye_prepro.dpsR(stpos:enpos)];
+                dpsl = [dpsl, para.cond(d).trials{i}(n).Eye_prepro.dpsL(stpos:enpos)];
+            end
+        end
+    end
+    me = [nanmean(lfpall), nanmean(psr), nanmean(psl), nanmean(dpsr), nanmean(dpsl)];
+    sd = [nanstd(lfpall), nanstd(psr), nanstd(psl), nanstd(dpsr), nanstd(dpsl)];
+else
+    me = zeros(1, 5); sd = ones(1, 5);
+end
+for d = 1:2
+    lenlfp = length(para.cond(d).trials{end}(end).(lfpfield));
+    for i = 1:lenv    
+        for n = 1:para.cond(d).ntr(i)
+            para.cond(d).trials{i}(n).(lfpfield) = (...
+                para.cond(d).trials{i}(n).(lfpfield) - me(1))/sd(1);
+            para.cond(d).lfpfull{i}(n, 1:lenlfp) = para.cond(d).trials{i}(n).(lfpfield);
+            para.cond(d).trials{i}(n).Eye_prepro.psR = (...
+                para.cond(d).trials{i}(n).Eye_prepro.psR - me(2))/sd(2);
+            para.cond(d).trials{i}(n).Eye_prepro.psL = (...
+                para.cond(d).trials{i}(n).Eye_prepro.psL - me(3))/sd(3);
+            para.cond(d).trials{i}(n).Eye_prepro.dpsR = (...
+                para.cond(d).trials{i}(n).Eye_prepro.dpsR - me(4))/sd(4);
+            para.cond(d).trials{i}(n).Eye_prepro.dpsL = (...
+                para.cond(d).trials{i}(n).Eye_prepro.dpsL - me(5))/sd(5);
         end
     end
 end
