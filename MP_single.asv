@@ -12,9 +12,11 @@ function MP_single(ex, internal, filename)
 
 % preset parameters
 Fs = 1000; % sampling frequency
-mypath = cd;
-stridx = 
-folderName = '../LFP_project/Data/MPprepro/';
+if ispc
+    folderName = '../Data/MPprepro_RC/';
+else
+    folderName = '../Data/MPprepro_RC/';
+end
 max_iter = 100;
 wrap = 1; % if 1, it does not work...
 L = 4096; % 2^N
@@ -37,15 +39,16 @@ end
 % MP decomposition
 freq = 0:Fs/L:100;
 lenf = length(freq);
-inputSignal = nan(L, ntr);
+inputSignal = nan(L, ntr, 1);
 idxs = ones(1, ntr);
 for k = 1:ntr
     % padding and mean subtraction for signal processing
     [z, idxs(k)] = padding(ex.Trials(k).(lfpfield), L);
-    inputSignal(:, k) = z - mean(z);
+    inputSignal(:, k, 1) = z - nanmean(z);
 end
 
 % MP =========================
+folderName = strrep(folderName, '\', '/');
 filename = strrep(filename, '\', '/');
 
 % perform Gabor decomposition
@@ -85,10 +88,11 @@ disp([filename ' saved after MP!'])
 
 % subfunction
 function [b, pre] = padding(a, L)
-% add padding for signal processing
+% add padding for signal processing 
 lena = length(a);
 b = zeros(1, L);
 pre = floor((L - lena)/2) + 1;
-b(1:pre-1) = a(1);
+me = nanmean(a);
+b(1:pre-1) = me;
 b(pre:pre+lena-1) = a;
-b(pre+lena:end) = a(end);
+b(pre+lena:end) = me;

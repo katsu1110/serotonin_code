@@ -12,9 +12,7 @@ function MP_single(ex, internal, filename)
 
 % preset parameters
 Fs = 1000; % sampling frequency
-mypath = cd;
-stridx = strfind(mypath, 'LFP_project');
-folderName = [mypath(1:stridx+10) '/Data/MPprepro_RC/'];
+folderName = '../Data/MPprepro_RC/';
 max_iter = 100;
 wrap = 1; % if 1, it does not work...
 L = 4096; % 2^N
@@ -37,15 +35,16 @@ end
 % MP decomposition
 freq = 0:Fs/L:100;
 lenf = length(freq);
-inputSignal = nan(L, ntr);
+inputSignal = nan(L, ntr, 1);
 idxs = ones(1, ntr);
 for k = 1:ntr
     % padding and mean subtraction for signal processing
     [z, idxs(k)] = padding(ex.Trials(k).(lfpfield), L);
-    inputSignal(:, k) = z - nanmean(z);
+    inputSignal(:, k, 1) = z - nanmean(z);
 end
 
 % MP =========================
+folderName = strrep(folderName, '\', '/');
 filename = strrep(filename, '\', '/');
 
 % perform Gabor decomposition
@@ -56,10 +55,10 @@ runGabor(folderName, filename, L, max_iter);
 exn.MPtime = ex.Trials(end).LFP_prepro_time;
 exn.freq = freq;
 MPtrials = struct('signal', [], 'energy', []);
-parfor k = 1:ntr
-    % load data
-    gaborInfo = getGaborData(folderName, filename, 1);
 
+% load data
+gaborInfo = getGaborData(folderName, filename, 1);
+parfor k = 1:ntr
     % signal
     mp_signal = reconstructSignalFromAtomsMPP(...
         gaborInfo{k}.gaborData, L, wrap, atomList);
