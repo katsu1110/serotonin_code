@@ -205,6 +205,8 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
                 'derivative pupil size', 'lfp response', 'csd', 'low-freq (<10Hz)', 'gamma-freq (>40Hz)', ...
                 'label_seq'};
     lenl = length(collab);
+    ts = 0.3; % 3 tapers
+    params = define_params(fs, ts, 0);
     for d = 1:2
         para.cond(d).collab = collab; 
         for i = 1:lenv            
@@ -215,8 +217,11 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
             
             % LFP power
             f = exns{d}.freq;
-            t = para.cond(d).trials{i}(end).LFP_prepro_time > para.window{end}(1) ...
-                & para.cond(d).trials{i}(end).LFP_prepro_time <= para.window{end}(2);
+            t = 
+            [S, f] = mtspectrumc(para.cond(d).lfpfull{i}(:, ...
+                para.cond(d).trials{i}(end).LFP_prepro_time > para.window{end}(1) ...
+                & para.cond(d).trials{i}(end).LFP_prepro_time <= para.window{end}(2))', ...
+                params);
             for n = 1:para.cond(d).ntr(i)
                 % spike count (su)
                 para.cond(d).mat{i}(n, 1) = para.cond(d).spkc{2, i}(n);
@@ -239,10 +244,13 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
                 para.cond(d).mat{i}(n, 6) = mean([0 0 diff(diff(lfpseg))]);
                 
                 % low-freq power
-                para.cond(d).mat{i}(n, 7) = nanmean(nanmean(para.cond(d).trials{i}(n).energy(f <= 10, t)));
+%                 para.cond(d).mat{i}(n, 7) = nanmean(10*log10(S(f <= 10, n)), 1);
+                para.cond(d).mat{i}(n, 7) = nanmean(S(f <= 10, n), 1);
+                para.cond(d).mat{i}(n, 7) = nanmean(para.cond(d).trials{i}(n).energy(exns{f}.freq <= 10, :), 1);
                 
                 % gamma power
-                para.cond(d).mat{i}(n, 8) = nanmean(nanmean(para.cond(d).trials{i}(n).energy(f >= 40 & f <= 90, t)));
+%                 para.cond(d).mat{i}(n, 8) = nanmean(10*log10(S(f >= 40, n)), 1);
+                para.cond(d).mat{i}(n, 8) = nanmean(S(f >= 40, n), 1);
                 
                 % label sequence
                 para.cond(d).mat{i}(n, 9) = para.cond(d).trials{i}(n).label_seq;
