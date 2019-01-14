@@ -52,13 +52,13 @@ for i = 1:lenses
     end
     for d = 1:2
         % mean off duration
-        mean_dur(i, 1, d) = mean(hmms.cond(d).results{i}.hmm.state(idx(1)).duration);
+        mean_dur(i, 1, d) = nanmean(hmms.cond(d).results{i}.hmm.state(idx(1)).duration);
         % mean on duration
-        mean_dur(i, 2, d) = mean(hmms.cond(d).results{i}.hmm.state(idx(2)).duration);
+        mean_dur(i, 2, d) = nanmean(hmms.cond(d).results{i}.hmm.state(idx(2)).duration);
         % SD of off duration
-        sd_dur(i, 1, d) = std(hmms.cond(d).results{i}.hmm.state(idx(1)).duration);
+        sd_dur(i, 1, d) = nanstd(hmms.cond(d).results{i}.hmm.state(idx(1)).duration);
         % SD of on duration
-        sd_dur(i, 2, d) = std(hmms.cond(d).results{i}.hmm.state(idx(2)).duration);
+        sd_dur(i, 2, d) = nanstd(hmms.cond(d).results{i}.hmm.state(idx(2)).duration);
         % variance explained by HMM
         variance_explained(i, d) = hmms.cond(d).results{i}.hmm.variance_explained;
         % time-constant for off duration
