@@ -126,30 +126,30 @@ for n = 1:N
 end
 
 % filtering ==================================
+% define notch filter
+d = designfilt('bandstopiir','FilterOrder',notchord, ...
+               'HalfPowerFrequency1', notchf(1),'HalfPowerFrequency2', notchf(2), ...
+               'DesignMethod','butter','SampleRate',Fs);
+lfps = filter(d, lfps);
 if filt
-    % define notch filter
-    d = designfilt('bandstopiir','FilterOrder',notchord, ...
-                   'HalfPowerFrequency1', notchf(1),'HalfPowerFrequency2', notchf(2), ...
-                   'DesignMethod','butter','SampleRate',Fs);
-
     % define bandpass filter for LFPs (Nauhaus et al., 2009)
     [b_high, a_high] = butter(bpord(1), bpf(1)/(Fs/2), 'high');
     [b_low, a_low] = butter(bpord(2), bpf(2)/(Fs/2), 'low');
 
-    % define bandpass filter for ps (Urai et al., 2017)
-    [bps, aps] = butter(2, [0.01 10]/((500)/2), 'bandpass');
-
     % LFP =======================
     lfps = filter(b_high, a_high, lfps);
     lfps = filter(b_low, a_low, lfps);
-    lfps = filter(d, lfps);
-
-    % Pupil ======================
-    psR = filter(bps, aps, psR);
-    psL = filter(bps, aps, psL);
-    dpsR= filter(bps, aps, dpsR);
-    dpsL = filter(bps, aps, dpsL);
 end
+
+% filter pupil======================
+% define bandpass filter for ps (Urai et al., 2017)
+[bps, aps] = butter(2, [0.01 10]/((500)/2), 'bandpass');
+
+% filtering
+psR = filter(bps, aps, psR);
+psL = filter(bps, aps, psL);
+dpsR= filter(bps, aps, dpsR);
+dpsL = filter(bps, aps, dpsL);
 
 % back to ex-file ==============================
 ds = round(500/ex.setup.refreshRate);

@@ -1860,18 +1860,18 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'lfps_pair_mp_nothin_sc'))
 %             d5 = load([loadpath_mp 'iTrials/' lfplist{i}{1}], 'exn');
             
             % split trials based on sc
-            [ex, idx] = ex_spliter(d0.ex, 'sc');
+            [ex0, ex2, sidx1, sidx2] = ex_spliter_es(d0.ex, es, thre, wnd);
             exn3_0 = d3.exn;
-            exn3_0.Trials = exn3_0.Trials(idx{1});
+            exn3_0.Trials = exn3_0.Trials(sidx1);
             exn3_2 = d3.exn;
-            exn3_2.Trials = exn3_2.Trials(idx{2});
+            exn3_2.Trials = exn3_2.Trials(sidx2);
 %             exn5_0 = d5.exn;
 %             exn5_0.Trials = exn5_0.Trials(idx{1});
 %             exn5_2 = d5.exn;
 %             exn5_2.Trials = exn5_2.Trials(idx{2});
             
             % analysis
-            Out1{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn3_0, exn3_2, 'LFP_prepro', 0);
+            Out1{i} = pair_stmLFP4mp(ex0, ex2, exn3_0, exn3_2, 'LFP_prepro', 0);
 %             Out2{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn5_0, exn5_2, 'iLFP_prepro', 0);
             
             % drug -----------------------------------

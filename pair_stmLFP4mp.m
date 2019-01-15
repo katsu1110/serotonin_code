@@ -239,10 +239,10 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'mat
                 para.cond(d).mat{i}(n, 6) = mean([0 0 diff(diff(lfpseg))]);
                 
                 % low-freq power
-                para.cond(d).mat{i}(n, 7) = nanmean(nanmean(para.cond(d).trials{i}(n).energy(f <= 10, t)));
+                para.cond(d).mat{i}(n, 7) = nanmean(nanmean(10*log10(para.cond(d).trials{i}(n).energy(f <= 10, t))));
                 
                 % gamma power
-                para.cond(d).mat{i}(n, 8) = nanmean(nanmean(para.cond(d).trials{i}(n).energy(f >= 40 & f <= 90, t)));
+                para.cond(d).mat{i}(n, 8) = nanmean(nanmean(10*log10(para.cond(d).trials{i}(n).energy(f >= 40 & f <= 90, t))));
                 
                 % label sequence
                 para.cond(d).mat{i}(n, 9) = para.cond(d).trials{i}(n).label_seq;

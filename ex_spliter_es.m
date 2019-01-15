@@ -1,4 +1,4 @@
-function [ex0, ex2] = ex_spliter_es(ex, es, thre, wnd)
+function [ex0, ex2, sidx1, sidx2] = ex_spliter_es(ex, es, thre, wnd)
 %%
 % split ex-file based on firing rate such that the difference between the
 % new ex-files is close to the specified effect size 'es'
