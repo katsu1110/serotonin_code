@@ -1193,7 +1193,7 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'lfps_pair_mp'))
    
     % load data and lists
     loadpath = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/LFPprepro/'];
-    loadpath_mp = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/MPprepro/'];
+    loadpath_mp = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/MPprepro_RC/'];
     a = load([loadpath 'lfplist.mat'], 'lfplist');  
     b = load([mypath '/Corinna/SharedCode/Katsu/list_RC.mat'], 'list_RC'); 
     c = load([mypath '/Corinna/SharedCode/Katsu/incl_i_all_stim_cond_2007.mat'], 'incl_i'); 
@@ -1281,544 +1281,544 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'lfps_pair_mp'))
     end
 end
 
-% basic LFP analysis =========================
-if sum(strcmp(type, 'all')) || sum(strcmp(type,  'lfps_pair_mp_nothin'))
-    % stimulus types
-    stmtypes = {'rc', 'or', 'co', 'sf', 'sz'};
-   
-    % load data and lists
-    loadpath = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/LFPprepro/'];
-    loadpath_mp = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/MPprepro/'];
-    a = load([loadpath 'lfplist.mat'], 'lfplist');  
-    b = load([mypath '/Corinna/SharedCode/Katsu/list_RC.mat'], 'list_RC'); 
-    c = load([mypath '/Corinna/SharedCode/Katsu/incl_i_all_stim_cond_2007.mat'], 'incl_i'); 
-    incl_i = c.incl_i;
-    list_RC = b.list_RC;
-    lfplist = a.lfplist;
-    N = length(lfplist);
-    
-    % initialization
-    Out1 = cell(1, N); 
-%     Out2 = cell(1, N);
-    goodunit = zeros(1, N); is5ht = zeros(1, N);
-    stmtype = zeros(1, N); animal = zeros(1, N); 
-    parfor i = 1:N            
-        % goodunit
-        if isempty(strfind(lfplist{i}{1}, 'xRC'))
-            goodunit(i) = ismember(i, incl_i);
-            continue
-        else
-            goodunit(i) = ismember(i, list_RC);
-            stmtype(i) = 1;
-        end
-        try
-            % load =======================
-            d0 = load([loadpath lfplist{i}{1}], 'ex');
-            d2 = load([loadpath lfplist{i}{2}], 'ex');
-            d3 = load([loadpath_mp 'Trials/' lfplist{i}{1}], 'exn');
-            d4 = load([loadpath_mp 'Trials/' lfplist{i}{2}], 'exn');
-%             d5 = load([loadpath_mp 'iTrials/' lfplist{i}{1}], 'exn');
-%             d6 = load([loadpath_mp 'iTrials/' lfplist{i}{2}], 'exn');
-            
-            % analysis
-            Out1{i} = pair_stmLFP4mp(d0.ex, d2.ex, d3.exn, d4.exn, 'LFP_prepro', 0);
-%             Out2{i} = pair_stmLFP4mp(d0.ex, d2.ex, d5.exn, d6.exn, 'iLFP_prepro', 0);
-
-            % stimlus type
-            if stmtype(i) == 0
-                stmtype(i) = find(strcmp(stmtypes, d0.ex.exp.e1.type));
-            end
-
-            % is mango
-            animal(i) = strcmp(lfplist{i}{1}(1:2), 'ma');
-
-            % is 5HT
-            is5ht(i) = ismember(1, contains(lfplist{i}{2}, '5HT'));
-
-            disp(['session ' num2str(i) ' analyzed!'])
-        catch
-            disp(['session ' num2str(i) ' error'])
-        end
-    end
-    % unit info
-%     oks = ~cellfun('isempty', Out1) & ~cellfun('isempty', Out2);
-    oks = ~cellfun('isempty', Out1);
-    
-    Lfps_all.lfplist = lfplist(oks);
-    Lfps_all.stmtype = stmtype(oks);
-    Lfps_all.animal = animal(oks);
-    Lfps_all.is5ht = is5ht(oks);
-    Lfps_all.goodunit = goodunit(oks);
-
-    % results from analysis    
-%     iLfps_all = Lfps_all;
-    Lfps_all.LFP_prepro = Out1(oks); 
-%     iLfps_all.LFP_prepro = Out2(oks); 
-    
-    % split by stimulus type
-    fields = {'lfplist', 'stmtype', 'animal', 'is5ht', 'goodunit'};
-    for s = 1:length(stmtypes)
-        idx = Lfps_all.stmtype == s;
-        if s > 1
-            continue
-        end
-        for f = 1:length(fields)
-            Lfps.(fields{f}) = Lfps_all.(fields{f})(idx);
-%             iLfps.(fields{f}) = iLfps_all.(fields{f})(idx);
-        end
-        
-        Lfps.LFP_prepro = Lfps_all.LFP_prepro(idx);
-%         iLfps.LFP_prepro = iLfps_all.LFP_prepro(idx);
-        
-        % autosave
-        save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_nothin/Lfps_mp_' stmtypes{s} '.mat'], 'Lfps', '-v7.3')
-%         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_nothin/iLfps_mp_' stmtypes{s} '.mat'], 'iLfps', '-v7.3')
-        disp([stmtypes{s} ': lfps saved!'])
-    end
-end
-
-
-% basic LFP analysis =========================
-if sum(strcmp(type, 'all')) || sum(strcmp(type,  'lfps_pair_mp_ps'))
-    % stimulus types
-    stmtypes = {'rc', 'or', 'co', 'sf', 'sz'};
-   
-    % load data and lists
-    loadpath = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/LFPprepro/'];    
-    loadpath_mp = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/MPprepro/'];
-    a = load([loadpath 'lfplist.mat'], 'lfplist');  
-    b = load([mypath '/Corinna/SharedCode/Katsu/list_RC.mat'], 'list_RC'); 
-    c = load([mypath '/Corinna/SharedCode/Katsu/incl_i_all_stim_cond_2007.mat'], 'incl_i'); 
-    incl_i = c.incl_i;
-    list_RC = b.list_RC;
-    lfplist = a.lfplist;
-    N = length(lfplist);
-    
-    % initialization
-    Out1 = cell(1, N); 
-%     Out2 = cell(1, N);
-%     Out3 = cell(1, N);
-%     Out4 = cell(1, N);
-    goodunit = zeros(1, N); is5ht = zeros(1, N);
-    stmtype = zeros(1, N); animal = zeros(1, N); 
-    parfor i = 1:N            
-        % goodunit
-        if isempty(strfind(lfplist{i}{1}, 'xRC'))
-            goodunit(i) = ismember(i, incl_i);
-            continue
-        else
-            goodunit(i) = ismember(i, list_RC);
-            stmtype(i) = 1;
-        end
-        try
-            % load =======================
-            % baseline ---------------------------
-            d0 = load([loadpath lfplist{i}{1}], 'ex');
-            d3 = load([loadpath_mp 'Trials/' lfplist{i}{1}], 'exn');
-%             d5 = load([loadpath_mp 'iTrials/' lfplist{i}{1}], 'exn');
-            
-            % split trials based on pupil
-            [ex, idx] = ex_spliter(d0.ex);
-            exn3_0 = d3.exn;
-            exn3_0.Trials = exn3_0.Trials(idx{1});
-            exn3_2 = d3.exn;
-            exn3_2.Trials = exn3_2.Trials(idx{2});
-%             exn5_0 = d5.exn;
-%             exn5_0.Trials = exn5_0.Trials(idx{1});
-%             exn5_2 = d5.exn;
-%             exn5_2.Trials = exn5_2.Trials(idx{2});
-            
-            % analysis
-            Out1{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn3_0, exn3_2, 'LFP_prepro');
-%             Out2{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn5_0, exn5_2, 'iLFP_prepro');
-            
-            % drug -----------------------------------
+% % basic LFP analysis =========================
+% if sum(strcmp(type, 'all')) || sum(strcmp(type,  'lfps_pair_mp_nothin'))
+%     % stimulus types
+%     stmtypes = {'rc', 'or', 'co', 'sf', 'sz'};
+%    
+%     % load data and lists
+%     loadpath = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/LFPprepro/'];
+%     loadpath_mp = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/MPprepro/'];
+%     a = load([loadpath 'lfplist.mat'], 'lfplist');  
+%     b = load([mypath '/Corinna/SharedCode/Katsu/list_RC.mat'], 'list_RC'); 
+%     c = load([mypath '/Corinna/SharedCode/Katsu/incl_i_all_stim_cond_2007.mat'], 'incl_i'); 
+%     incl_i = c.incl_i;
+%     list_RC = b.list_RC;
+%     lfplist = a.lfplist;
+%     N = length(lfplist);
+%     
+%     % initialization
+%     Out1 = cell(1, N); 
+% %     Out2 = cell(1, N);
+%     goodunit = zeros(1, N); is5ht = zeros(1, N);
+%     stmtype = zeros(1, N); animal = zeros(1, N); 
+%     parfor i = 1:N            
+%         % goodunit
+%         if isempty(strfind(lfplist{i}{1}, 'xRC'))
+%             goodunit(i) = ismember(i, incl_i);
+%             continue
+%         else
+%             goodunit(i) = ismember(i, list_RC);
+%             stmtype(i) = 1;
+%         end
+%         try
+%             % load =======================
+%             d0 = load([loadpath lfplist{i}{1}], 'ex');
 %             d2 = load([loadpath lfplist{i}{2}], 'ex');
+%             d3 = load([loadpath_mp 'Trials/' lfplist{i}{1}], 'exn');
 %             d4 = load([loadpath_mp 'Trials/' lfplist{i}{2}], 'exn');
-%             d6 = load([loadpath_mp 'iTrials/' lfplist{i}{2}], 'exn');
-            
-            % split trials based on pupil
-%             [ex, idx] = ex_spliter(d2.ex);
-%             exn4_0 = d4.exn;
-%             exn4_0.Trials = exn4_0.Trials(idx{1});
-%             exn4_2 = d4.exn;
-%             exn4_2.Trials = exn4_2.Trials(idx{2});
-%             exn6_0 = d6.exn;
-%             exn6_0.Trials = exn6_0.Trials(idx{1});
-%             exn6_2 = d6.exn;
-%             exn6_2.Trials = exn6_2.Trials(idx{2});
-            
-            % analysis
-%             Out3{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn4_0, exn4_2, 'LFP_prepro');
-%             Out4{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn6_0, exn6_2, 'iLFP_prepro');
-            
-            % stimlus type
-            if stmtype(i) == 0
-                stmtype(i) = find(strcmp(stmtypes, d0.ex.exp.e1.type));
-            end
-
-            % is mango
-            animal(i) = strcmp(lfplist{i}{1}(1:2), 'ma');
-
-            % is 5HT
-            is5ht(i) = ismember(1, contains(lfplist{i}{2}, '5HT'));
-
-            disp(['session ' num2str(i) ' analyzed!'])
-        catch
-            disp(['session ' num2str(i) ' error'])
-        end
-    end
-    % unit info
-%     outs = cellfun('isempty', Out1) | cellfun('isempty', Out2) | ...
-%         cellfun('isempty', Out3) | cellfun('isempty', Out4);
-    outs = cellfun('isempty', Out1) ;
-    lfplist = lfplist(outs==0);
-    Lfps_all.lfplist = lfplist;
-    Lfps_all.stmtype = stmtype(outs==0);
-    Lfps_all.animal = animal(outs==0);
-    Lfps_all.is5ht = is5ht(outs==0);
-    Lfps_all.goodunit = goodunit(outs==0);
-
-    % results from analysis    
-%     iLfps_all = Lfps_all;
-%     Lfps_dr = Lfps_all;
-%     iLfps_dr = Lfps_all;
-    Lfps_all.LFP_prepro = Out1(outs==0); 
-%     iLfps_all.LFP_prepro = Out2(outs==0); 
-%     Lfps_dr.LFP_prepro = Out3(outs==0); 
-%     iLfps_dr.LFP_prepro = Out4(outs==0); 
-    
-    % split by stimulus type
-    fields = {'lfplist', 'stmtype', 'animal', 'is5ht', 'goodunit'};
-    for s = 1:length(stmtypes)
-        idx = Lfps_all.stmtype == s;
-        if s > 1
-            continue
-        end
-        % baseline 
-        for f = 1:length(fields)
-            Lfps.(fields{f}) = Lfps_all.(fields{f})(idx);
-%             iLfps.(fields{f}) = iLfps_all.(fields{f})(idx);
-        end
-        
-        Lfps.LFP_prepro = Lfps_all.LFP_prepro(idx);
-%         iLfps.LFP_prepro = iLfps_all.LFP_prepro(idx);
-        
-        % autosave
-        save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_ps/Lfps_mp_' stmtypes{s} '_base.mat'], 'Lfps', '-v7.3')
-%         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_ps/iLfps_mp_' stmtypes{s} '_base.mat'], 'iLfps', '-v7.3')
-        
-%         % drug
+% %             d5 = load([loadpath_mp 'iTrials/' lfplist{i}{1}], 'exn');
+% %             d6 = load([loadpath_mp 'iTrials/' lfplist{i}{2}], 'exn');
+%             
+%             % analysis
+%             Out1{i} = pair_stmLFP4mp(d0.ex, d2.ex, d3.exn, d4.exn, 'LFP_prepro', 0);
+% %             Out2{i} = pair_stmLFP4mp(d0.ex, d2.ex, d5.exn, d6.exn, 'iLFP_prepro', 0);
+% 
+%             % stimlus type
+%             if stmtype(i) == 0
+%                 stmtype(i) = find(strcmp(stmtypes, d0.ex.exp.e1.type));
+%             end
+% 
+%             % is mango
+%             animal(i) = strcmp(lfplist{i}{1}(1:2), 'ma');
+% 
+%             % is 5HT
+%             is5ht(i) = ismember(1, contains(lfplist{i}{2}, '5HT'));
+% 
+%             disp(['session ' num2str(i) ' analyzed!'])
+%         catch
+%             disp(['session ' num2str(i) ' error'])
+%         end
+%     end
+%     % unit info
+% %     oks = ~cellfun('isempty', Out1) & ~cellfun('isempty', Out2);
+%     oks = ~cellfun('isempty', Out1);
+%     
+%     Lfps_all.lfplist = lfplist(oks);
+%     Lfps_all.stmtype = stmtype(oks);
+%     Lfps_all.animal = animal(oks);
+%     Lfps_all.is5ht = is5ht(oks);
+%     Lfps_all.goodunit = goodunit(oks);
+% 
+%     % results from analysis    
+% %     iLfps_all = Lfps_all;
+%     Lfps_all.LFP_prepro = Out1(oks); 
+% %     iLfps_all.LFP_prepro = Out2(oks); 
+%     
+%     % split by stimulus type
+%     fields = {'lfplist', 'stmtype', 'animal', 'is5ht', 'goodunit'};
+%     for s = 1:length(stmtypes)
+%         idx = Lfps_all.stmtype == s;
+%         if s > 1
+%             continue
+%         end
 %         for f = 1:length(fields)
-%             Lfps.(fields{f}) = Lfps_dr.(fields{f})(idx);
-%             iLfps.(fields{f}) = iLfps_dr.(fields{f})(idx);
+%             Lfps.(fields{f}) = Lfps_all.(fields{f})(idx);
+% %             iLfps.(fields{f}) = iLfps_all.(fields{f})(idx);
 %         end
 %         
-%         Lfps.LFP_prepro = Lfps_dr.LFP_prepro(idx);
-%         iLfps.LFP_prepro = iLfps_dr.LFP_prepro(idx);
+%         Lfps.LFP_prepro = Lfps_all.LFP_prepro(idx);
+% %         iLfps.LFP_prepro = iLfps_all.LFP_prepro(idx);
 %         
 %         % autosave
-%         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_ps/Lfps_mp_' stmtypes{s} '_drug.mat'], 'Lfps', '-v7.3')
-%         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_ps/iLfps_mp_' stmtypes{s} '_drug.mat'], 'iLfps', '-v7.3')
-%         
-        disp([stmtypes{s} ': lfps saved!'])
-    end
-end
+%         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_nothin/Lfps_mp_' stmtypes{s} '.mat'], 'Lfps', '-v7.3')
+% %         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_nothin/iLfps_mp_' stmtypes{s} '.mat'], 'iLfps', '-v7.3')
+%         disp([stmtypes{s} ': lfps saved!'])
+%     end
+% end
 
-% basic LFP analysis =========================
-if sum(strcmp(type, 'all')) || sum(strcmp(type,  'lfps_pair_mp_nothin_ps'))
-    % stimulus types
-    stmtypes = {'rc', 'or', 'co', 'sf', 'sz'};
-   
-    % load data and lists
-    loadpath = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/LFPprepro/'];    
-    loadpath_mp = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/MPprepro/'];
-    a = load([loadpath 'lfplist.mat'], 'lfplist');  
-    b = load([mypath '/Corinna/SharedCode/Katsu/list_RC.mat'], 'list_RC'); 
-    c = load([mypath '/Corinna/SharedCode/Katsu/incl_i_all_stim_cond_2007.mat'], 'incl_i'); 
-    incl_i = c.incl_i;
-    list_RC = b.list_RC;
-    lfplist = a.lfplist;
-    N = length(lfplist);
-    
-    % initialization
-    Out1 = cell(1, N); 
-%     Out2 = cell(1, N);
-%     Out3 = cell(1, N); 
-%     Out4 = cell(1, N);
-    goodunit = zeros(1, N); is5ht = zeros(1, N);
-    stmtype = zeros(1, N); animal = zeros(1, N); 
-    parfor i = 1:N            
-        % goodunit
-        if isempty(strfind(lfplist{i}{1}, 'xRC'))
-            goodunit(i) = ismember(i, incl_i);
-            continue
-        else
-            goodunit(i) = ismember(i, list_RC);
-            stmtype(i) = 1;
-        end
-        try
-            % load =======================
-            % baseline ---------------------------
-            d0 = load([loadpath lfplist{i}{1}], 'ex');
-            d3 = load([loadpath_mp 'Trials/' lfplist{i}{1}], 'exn');
-%             d5 = load([loadpath_mp 'iTrials/' lfplist{i}{1}], 'exn');
-            
-            % split trials based on pupil
-            [ex, idx] = ex_spliter(d0.ex);
-            exn3_0 = d3.exn;
-            exn3_0.Trials = exn3_0.Trials(idx{1});
-            exn3_2 = d3.exn;
-            exn3_2.Trials = exn3_2.Trials(idx{2});
-%             exn5_0 = d5.exn;
-%             exn5_0.Trials = exn5_0.Trials(idx{1});
-%             exn5_2 = d5.exn;
-%             exn5_2.Trials = exn5_2.Trials(idx{2});
-%             
-            % analysis
-            Out1{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn3_0, exn3_2, 'LFP_prepro', 0);
-%             Out2{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn5_0, exn5_2, 'iLFP_prepro', 0);
-            
-            % drug -----------------------------------
-%             d2 = load([loadpath lfplist{i}{2}], 'ex');
-%             d4 = load([loadpath_mp 'Trials/' lfplist{i}{2}], 'exn');
-%             d6 = load([loadpath_mp 'iTrials/' lfplist{i}{2}], 'exn');
+
+% % basic LFP analysis =========================
+% if sum(strcmp(type, 'all')) || sum(strcmp(type,  'lfps_pair_mp_ps'))
+%     % stimulus types
+%     stmtypes = {'rc', 'or', 'co', 'sf', 'sz'};
+%    
+%     % load data and lists
+%     loadpath = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/LFPprepro/'];    
+%     loadpath_mp = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/MPprepro/'];
+%     a = load([loadpath 'lfplist.mat'], 'lfplist');  
+%     b = load([mypath '/Corinna/SharedCode/Katsu/list_RC.mat'], 'list_RC'); 
+%     c = load([mypath '/Corinna/SharedCode/Katsu/incl_i_all_stim_cond_2007.mat'], 'incl_i'); 
+%     incl_i = c.incl_i;
+%     list_RC = b.list_RC;
+%     lfplist = a.lfplist;
+%     N = length(lfplist);
+%     
+%     % initialization
+%     Out1 = cell(1, N); 
+% %     Out2 = cell(1, N);
+% %     Out3 = cell(1, N);
+% %     Out4 = cell(1, N);
+%     goodunit = zeros(1, N); is5ht = zeros(1, N);
+%     stmtype = zeros(1, N); animal = zeros(1, N); 
+%     parfor i = 1:N            
+%         % goodunit
+%         if isempty(strfind(lfplist{i}{1}, 'xRC'))
+%             goodunit(i) = ismember(i, incl_i);
+%             continue
+%         else
+%             goodunit(i) = ismember(i, list_RC);
+%             stmtype(i) = 1;
+%         end
+%         try
+%             % load =======================
+%             % baseline ---------------------------
+%             d0 = load([loadpath lfplist{i}{1}], 'ex');
+%             d3 = load([loadpath_mp 'Trials/' lfplist{i}{1}], 'exn');
+% %             d5 = load([loadpath_mp 'iTrials/' lfplist{i}{1}], 'exn');
 %             
 %             % split trials based on pupil
-%             [ex, idx] = ex_spliter(d2.ex);
-%             exn4_0 = d4.exn;
-%             exn4_0.Trials = exn4_0.Trials(idx{1});
-%             exn4_2 = d4.exn;
-%             exn4_2.Trials = exn4_2.Trials(idx{2});
-%             exn6_0 = d6.exn;
-%             exn6_0.Trials = exn6_0.Trials(idx{1});
-%             exn6_2 = d6.exn;
-%             exn6_2.Trials = exn6_2.Trials(idx{2});
+%             [ex, idx] = ex_spliter(d0.ex);
+%             exn3_0 = d3.exn;
+%             exn3_0.Trials = exn3_0.Trials(idx{1});
+%             exn3_2 = d3.exn;
+%             exn3_2.Trials = exn3_2.Trials(idx{2});
+% %             exn5_0 = d5.exn;
+% %             exn5_0.Trials = exn5_0.Trials(idx{1});
+% %             exn5_2 = d5.exn;
+% %             exn5_2.Trials = exn5_2.Trials(idx{2});
 %             
 %             % analysis
-%             Out3{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn4_0, exn4_2, 'LFP_prepro', 0);
-%             Out4{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn6_0, exn6_2, 'iLFP_prepro', 0);
+%             Out1{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn3_0, exn3_2, 'LFP_prepro');
+% %             Out2{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn5_0, exn5_2, 'iLFP_prepro');
 %             
-            % stimlus type
-            if stmtype(i) == 0
-                stmtype(i) = find(strcmp(stmtypes, d0.ex.exp.e1.type));
-            end
-
-            % is mango
-            animal(i) = strcmp(lfplist{i}{1}(1:2), 'ma');
-
-            % is 5HT
-            is5ht(i) = ismember(1, contains(lfplist{i}{2}, '5HT'));
-
-            disp(['session ' num2str(i) ' analyzed!'])
-        catch
-            disp(['session ' num2str(i) ' error'])
-        end
-    end
-    % unit info
-%     outs = cellfun('isempty', Out1) | cellfun('isempty', Out2) | ...
-%         cellfun('isempty', Out3) | cellfun('isempty', Out4);
-    outs = cellfun('isempty', Out1);
-    lfplist = lfplist(outs==0);
-    Lfps_all.lfplist = lfplist;
-    Lfps_all.stmtype = stmtype(outs==0);
-    Lfps_all.animal = animal(outs==0);
-    Lfps_all.is5ht = is5ht(outs==0);
-    Lfps_all.goodunit = goodunit(outs==0);
-
-    % results from analysis    
-%     iLfps_all = Lfps_all;
-%     Lfps_dr = Lfps_all;
-%     iLfps_dr = Lfps_all;
-    Lfps_all.LFP_prepro = Out1(outs==0); 
-%     iLfps_all.LFP_prepro = Out2(outs==0); 
-%     Lfps_dr.LFP_prepro = Out3(outs==0); 
-%     iLfps_dr.LFP_prepro = Out4(outs==0); 
-    
-    % split by stimulus type
-    fields = {'lfplist', 'stmtype', 'animal', 'is5ht', 'goodunit'};
-    for s = 1:length(stmtypes)
-        idx = Lfps_all.stmtype == s;
-        if s > 1
-            continue
-        end
-        % baseline 
-        for f = 1:length(fields)
-            Lfps.(fields{f}) = Lfps_all.(fields{f})(idx);
-%             iLfps.(fields{f}) = iLfps_all.(fields{f})(idx);
-        end
-        
-        Lfps.LFP_prepro = Lfps_all.LFP_prepro(idx);
-%         iLfps.LFP_prepro = iLfps_all.LFP_prepro(idx);
-        
-        % autosave
-        save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_nothin_ps/Lfps_mp_' stmtypes{s} '_base.mat'], 'Lfps', '-v7.3')
-%         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_nothin_ps/iLfps_mp_' stmtypes{s} '_base.mat'], 'iLfps', '-v7.3')
-        
-        % drug
+%             % drug -----------------------------------
+% %             d2 = load([loadpath lfplist{i}{2}], 'ex');
+% %             d4 = load([loadpath_mp 'Trials/' lfplist{i}{2}], 'exn');
+% %             d6 = load([loadpath_mp 'iTrials/' lfplist{i}{2}], 'exn');
+%             
+%             % split trials based on pupil
+% %             [ex, idx] = ex_spliter(d2.ex);
+% %             exn4_0 = d4.exn;
+% %             exn4_0.Trials = exn4_0.Trials(idx{1});
+% %             exn4_2 = d4.exn;
+% %             exn4_2.Trials = exn4_2.Trials(idx{2});
+% %             exn6_0 = d6.exn;
+% %             exn6_0.Trials = exn6_0.Trials(idx{1});
+% %             exn6_2 = d6.exn;
+% %             exn6_2.Trials = exn6_2.Trials(idx{2});
+%             
+%             % analysis
+% %             Out3{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn4_0, exn4_2, 'LFP_prepro');
+% %             Out4{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn6_0, exn6_2, 'iLFP_prepro');
+%             
+%             % stimlus type
+%             if stmtype(i) == 0
+%                 stmtype(i) = find(strcmp(stmtypes, d0.ex.exp.e1.type));
+%             end
+% 
+%             % is mango
+%             animal(i) = strcmp(lfplist{i}{1}(1:2), 'ma');
+% 
+%             % is 5HT
+%             is5ht(i) = ismember(1, contains(lfplist{i}{2}, '5HT'));
+% 
+%             disp(['session ' num2str(i) ' analyzed!'])
+%         catch
+%             disp(['session ' num2str(i) ' error'])
+%         end
+%     end
+%     % unit info
+% %     outs = cellfun('isempty', Out1) | cellfun('isempty', Out2) | ...
+% %         cellfun('isempty', Out3) | cellfun('isempty', Out4);
+%     outs = cellfun('isempty', Out1) ;
+%     lfplist = lfplist(outs==0);
+%     Lfps_all.lfplist = lfplist;
+%     Lfps_all.stmtype = stmtype(outs==0);
+%     Lfps_all.animal = animal(outs==0);
+%     Lfps_all.is5ht = is5ht(outs==0);
+%     Lfps_all.goodunit = goodunit(outs==0);
+% 
+%     % results from analysis    
+% %     iLfps_all = Lfps_all;
+% %     Lfps_dr = Lfps_all;
+% %     iLfps_dr = Lfps_all;
+%     Lfps_all.LFP_prepro = Out1(outs==0); 
+% %     iLfps_all.LFP_prepro = Out2(outs==0); 
+% %     Lfps_dr.LFP_prepro = Out3(outs==0); 
+% %     iLfps_dr.LFP_prepro = Out4(outs==0); 
+%     
+%     % split by stimulus type
+%     fields = {'lfplist', 'stmtype', 'animal', 'is5ht', 'goodunit'};
+%     for s = 1:length(stmtypes)
+%         idx = Lfps_all.stmtype == s;
+%         if s > 1
+%             continue
+%         end
+%         % baseline 
 %         for f = 1:length(fields)
-%             Lfps.(fields{f}) = Lfps_dr.(fields{f})(idx);
-%             iLfps.(fields{f}) = iLfps_dr.(fields{f})(idx);
+%             Lfps.(fields{f}) = Lfps_all.(fields{f})(idx);
+% %             iLfps.(fields{f}) = iLfps_all.(fields{f})(idx);
 %         end
 %         
-%         Lfps.LFP_prepro = Lfps_dr.LFP_prepro(idx);
-%         iLfps.LFP_prepro = iLfps_dr.LFP_prepro(idx);
+%         Lfps.LFP_prepro = Lfps_all.LFP_prepro(idx);
+% %         iLfps.LFP_prepro = iLfps_all.LFP_prepro(idx);
 %         
 %         % autosave
-%         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_nothin_ps/Lfps_mp_' stmtypes{s} '_drug.mat'], 'Lfps', '-v7.3')
-%         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_nothin_ps/iLfps_mp_' stmtypes{s} '_drug.mat'], 'iLfps', '-v7.3')
+%         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_ps/Lfps_mp_' stmtypes{s} '_base.mat'], 'Lfps', '-v7.3')
+% %         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_ps/iLfps_mp_' stmtypes{s} '_base.mat'], 'iLfps', '-v7.3')
 %         
-        disp([stmtypes{s} ': lfps saved!'])
-    end
-end
-
-
-% basic LFP analysis =========================
-if sum(strcmp(type, 'all')) || sum(strcmp(type,  'lfps_pair_mp_sc'))
-    % stimulus types
-    stmtypes = {'rc', 'or', 'co', 'sf', 'sz'};
-   
-    % load data and lists
-    loadpath = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/LFPprepro/'];    
-    loadpath_mp = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/MPprepro/'];
-    a = load([loadpath 'lfplist.mat'], 'lfplist');  
-    b = load([mypath '/Corinna/SharedCode/Katsu/list_RC.mat'], 'list_RC'); 
-    c = load([mypath '/Corinna/SharedCode/Katsu/incl_i_all_stim_cond_2007.mat'], 'incl_i'); 
-    incl_i = c.incl_i;
-    list_RC = b.list_RC;
-    lfplist = a.lfplist;
-    N = length(lfplist);
-    
-    % initialization
-    Out1 = cell(1, N); 
-%     Out2 = cell(1, N);
-%     Out3 = cell(1, N); 
-%     Out4 = cell(1, N);
-    goodunit = zeros(1, N); is5ht = zeros(1, N);
-    stmtype = zeros(1, N); animal = zeros(1, N); 
-    parfor i = 1:N            
-        % goodunit
-        if isempty(strfind(lfplist{i}{1}, 'xRC'))
-            goodunit(i) = ismember(i, incl_i);
-            continue
-        else
-            goodunit(i) = ismember(i, list_RC);
-            stmtype(i) = 1;
-        end
-        try
-            % load =======================
-            % baseline ---------------------------
-            d0 = load([loadpath lfplist{i}{1}], 'ex');
-            d3 = load([loadpath_mp 'Trials/' lfplist{i}{1}], 'exn');
-%             d5 = load([loadpath_mp 'iTrials/' lfplist{i}{1}], 'exn');
-            
-            % split trials based on sc
-            [ex, idx] = ex_spliter(d0.ex, 'sc');
-            exn3_0 = d3.exn;
-            exn3_0.Trials = exn3_0.Trials(idx{1});
-            exn3_2 = d3.exn;
-            exn3_2.Trials = exn3_2.Trials(idx{2});
-%             exn5_0 = d5.exn;
-%             exn5_0.Trials = exn5_0.Trials(idx{1});
-%             exn5_2 = d5.exn;
-%             exn5_2.Trials = exn5_2.Trials(idx{2});
+% %         % drug
+% %         for f = 1:length(fields)
+% %             Lfps.(fields{f}) = Lfps_dr.(fields{f})(idx);
+% %             iLfps.(fields{f}) = iLfps_dr.(fields{f})(idx);
+% %         end
+% %         
+% %         Lfps.LFP_prepro = Lfps_dr.LFP_prepro(idx);
+% %         iLfps.LFP_prepro = iLfps_dr.LFP_prepro(idx);
+% %         
+% %         % autosave
+% %         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_ps/Lfps_mp_' stmtypes{s} '_drug.mat'], 'Lfps', '-v7.3')
+% %         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_ps/iLfps_mp_' stmtypes{s} '_drug.mat'], 'iLfps', '-v7.3')
+% %         
+%         disp([stmtypes{s} ': lfps saved!'])
+%     end
+% end
+% 
+% % basic LFP analysis =========================
+% if sum(strcmp(type, 'all')) || sum(strcmp(type,  'lfps_pair_mp_nothin_ps'))
+%     % stimulus types
+%     stmtypes = {'rc', 'or', 'co', 'sf', 'sz'};
+%    
+%     % load data and lists
+%     loadpath = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/LFPprepro/'];    
+%     loadpath_mp = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/MPprepro/'];
+%     a = load([loadpath 'lfplist.mat'], 'lfplist');  
+%     b = load([mypath '/Corinna/SharedCode/Katsu/list_RC.mat'], 'list_RC'); 
+%     c = load([mypath '/Corinna/SharedCode/Katsu/incl_i_all_stim_cond_2007.mat'], 'incl_i'); 
+%     incl_i = c.incl_i;
+%     list_RC = b.list_RC;
+%     lfplist = a.lfplist;
+%     N = length(lfplist);
+%     
+%     % initialization
+%     Out1 = cell(1, N); 
+% %     Out2 = cell(1, N);
+% %     Out3 = cell(1, N); 
+% %     Out4 = cell(1, N);
+%     goodunit = zeros(1, N); is5ht = zeros(1, N);
+%     stmtype = zeros(1, N); animal = zeros(1, N); 
+%     parfor i = 1:N            
+%         % goodunit
+%         if isempty(strfind(lfplist{i}{1}, 'xRC'))
+%             goodunit(i) = ismember(i, incl_i);
+%             continue
+%         else
+%             goodunit(i) = ismember(i, list_RC);
+%             stmtype(i) = 1;
+%         end
+%         try
+%             % load =======================
+%             % baseline ---------------------------
+%             d0 = load([loadpath lfplist{i}{1}], 'ex');
+%             d3 = load([loadpath_mp 'Trials/' lfplist{i}{1}], 'exn');
+% %             d5 = load([loadpath_mp 'iTrials/' lfplist{i}{1}], 'exn');
 %             
-            % analysis
-            Out1{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn3_0, exn3_2, 'LFP_prepro');
-%             Out2{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn5_0, exn5_2, 'iLFP_prepro');
-            
-            % drug -----------------------------------
-%             d2 = load([loadpath lfplist{i}{2}], 'ex');
-%             d4 = load([loadpath_mp 'Trials/' lfplist{i}{2}], 'exn');
-%             d6 = load([loadpath_mp 'iTrials/' lfplist{i}{2}], 'exn');
+%             % split trials based on pupil
+%             [ex, idx] = ex_spliter(d0.ex);
+%             exn3_0 = d3.exn;
+%             exn3_0.Trials = exn3_0.Trials(idx{1});
+%             exn3_2 = d3.exn;
+%             exn3_2.Trials = exn3_2.Trials(idx{2});
+% %             exn5_0 = d5.exn;
+% %             exn5_0.Trials = exn5_0.Trials(idx{1});
+% %             exn5_2 = d5.exn;
+% %             exn5_2.Trials = exn5_2.Trials(idx{2});
+% %             
+%             % analysis
+%             Out1{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn3_0, exn3_2, 'LFP_prepro', 0);
+% %             Out2{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn5_0, exn5_2, 'iLFP_prepro', 0);
+%             
+%             % drug -----------------------------------
+% %             d2 = load([loadpath lfplist{i}{2}], 'ex');
+% %             d4 = load([loadpath_mp 'Trials/' lfplist{i}{2}], 'exn');
+% %             d6 = load([loadpath_mp 'iTrials/' lfplist{i}{2}], 'exn');
+% %             
+% %             % split trials based on pupil
+% %             [ex, idx] = ex_spliter(d2.ex);
+% %             exn4_0 = d4.exn;
+% %             exn4_0.Trials = exn4_0.Trials(idx{1});
+% %             exn4_2 = d4.exn;
+% %             exn4_2.Trials = exn4_2.Trials(idx{2});
+% %             exn6_0 = d6.exn;
+% %             exn6_0.Trials = exn6_0.Trials(idx{1});
+% %             exn6_2 = d6.exn;
+% %             exn6_2.Trials = exn6_2.Trials(idx{2});
+% %             
+% %             % analysis
+% %             Out3{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn4_0, exn4_2, 'LFP_prepro', 0);
+% %             Out4{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn6_0, exn6_2, 'iLFP_prepro', 0);
+% %             
+%             % stimlus type
+%             if stmtype(i) == 0
+%                 stmtype(i) = find(strcmp(stmtypes, d0.ex.exp.e1.type));
+%             end
+% 
+%             % is mango
+%             animal(i) = strcmp(lfplist{i}{1}(1:2), 'ma');
+% 
+%             % is 5HT
+%             is5ht(i) = ismember(1, contains(lfplist{i}{2}, '5HT'));
+% 
+%             disp(['session ' num2str(i) ' analyzed!'])
+%         catch
+%             disp(['session ' num2str(i) ' error'])
+%         end
+%     end
+%     % unit info
+% %     outs = cellfun('isempty', Out1) | cellfun('isempty', Out2) | ...
+% %         cellfun('isempty', Out3) | cellfun('isempty', Out4);
+%     outs = cellfun('isempty', Out1);
+%     lfplist = lfplist(outs==0);
+%     Lfps_all.lfplist = lfplist;
+%     Lfps_all.stmtype = stmtype(outs==0);
+%     Lfps_all.animal = animal(outs==0);
+%     Lfps_all.is5ht = is5ht(outs==0);
+%     Lfps_all.goodunit = goodunit(outs==0);
+% 
+%     % results from analysis    
+% %     iLfps_all = Lfps_all;
+% %     Lfps_dr = Lfps_all;
+% %     iLfps_dr = Lfps_all;
+%     Lfps_all.LFP_prepro = Out1(outs==0); 
+% %     iLfps_all.LFP_prepro = Out2(outs==0); 
+% %     Lfps_dr.LFP_prepro = Out3(outs==0); 
+% %     iLfps_dr.LFP_prepro = Out4(outs==0); 
+%     
+%     % split by stimulus type
+%     fields = {'lfplist', 'stmtype', 'animal', 'is5ht', 'goodunit'};
+%     for s = 1:length(stmtypes)
+%         idx = Lfps_all.stmtype == s;
+%         if s > 1
+%             continue
+%         end
+%         % baseline 
+%         for f = 1:length(fields)
+%             Lfps.(fields{f}) = Lfps_all.(fields{f})(idx);
+% %             iLfps.(fields{f}) = iLfps_all.(fields{f})(idx);
+%         end
+%         
+%         Lfps.LFP_prepro = Lfps_all.LFP_prepro(idx);
+% %         iLfps.LFP_prepro = iLfps_all.LFP_prepro(idx);
+%         
+%         % autosave
+%         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_nothin_ps/Lfps_mp_' stmtypes{s} '_base.mat'], 'Lfps', '-v7.3')
+% %         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_nothin_ps/iLfps_mp_' stmtypes{s} '_base.mat'], 'iLfps', '-v7.3')
+%         
+%         % drug
+% %         for f = 1:length(fields)
+% %             Lfps.(fields{f}) = Lfps_dr.(fields{f})(idx);
+% %             iLfps.(fields{f}) = iLfps_dr.(fields{f})(idx);
+% %         end
+% %         
+% %         Lfps.LFP_prepro = Lfps_dr.LFP_prepro(idx);
+% %         iLfps.LFP_prepro = iLfps_dr.LFP_prepro(idx);
+% %         
+% %         % autosave
+% %         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_nothin_ps/Lfps_mp_' stmtypes{s} '_drug.mat'], 'Lfps', '-v7.3')
+% %         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_nothin_ps/iLfps_mp_' stmtypes{s} '_drug.mat'], 'iLfps', '-v7.3')
+% %         
+%         disp([stmtypes{s} ': lfps saved!'])
+%     end
+% end
+% 
+% 
+% % basic LFP analysis =========================
+% if sum(strcmp(type, 'all')) || sum(strcmp(type,  'lfps_pair_mp_sc'))
+%     % stimulus types
+%     stmtypes = {'rc', 'or', 'co', 'sf', 'sz'};
+%    
+%     % load data and lists
+%     loadpath = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/LFPprepro/'];    
+%     loadpath_mp = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/MPprepro/'];
+%     a = load([loadpath 'lfplist.mat'], 'lfplist');  
+%     b = load([mypath '/Corinna/SharedCode/Katsu/list_RC.mat'], 'list_RC'); 
+%     c = load([mypath '/Corinna/SharedCode/Katsu/incl_i_all_stim_cond_2007.mat'], 'incl_i'); 
+%     incl_i = c.incl_i;
+%     list_RC = b.list_RC;
+%     lfplist = a.lfplist;
+%     N = length(lfplist);
+%     
+%     % initialization
+%     Out1 = cell(1, N); 
+% %     Out2 = cell(1, N);
+% %     Out3 = cell(1, N); 
+% %     Out4 = cell(1, N);
+%     goodunit = zeros(1, N); is5ht = zeros(1, N);
+%     stmtype = zeros(1, N); animal = zeros(1, N); 
+%     parfor i = 1:N            
+%         % goodunit
+%         if isempty(strfind(lfplist{i}{1}, 'xRC'))
+%             goodunit(i) = ismember(i, incl_i);
+%             continue
+%         else
+%             goodunit(i) = ismember(i, list_RC);
+%             stmtype(i) = 1;
+%         end
+%         try
+%             % load =======================
+%             % baseline ---------------------------
+%             d0 = load([loadpath lfplist{i}{1}], 'ex');
+%             d3 = load([loadpath_mp 'Trials/' lfplist{i}{1}], 'exn');
+% %             d5 = load([loadpath_mp 'iTrials/' lfplist{i}{1}], 'exn');
 %             
 %             % split trials based on sc
-%             [ex, idx] = ex_spliter(d2.ex, 'sc');
-%             exn4_0 = d4.exn;
-%             exn4_0.Trials = exn4_0.Trials(idx{1});
-%             exn4_2 = d4.exn;
-%             exn4_2.Trials = exn4_2.Trials(idx{2});
-%             exn6_0 = d6.exn;
-%             exn6_0.Trials = exn6_0.Trials(idx{1});
-%             exn6_2 = d6.exn;
-%             exn6_2.Trials = exn6_2.Trials(idx{2});
-%             
+%             [ex, idx] = ex_spliter(d0.ex, 'sc');
+%             exn3_0 = d3.exn;
+%             exn3_0.Trials = exn3_0.Trials(idx{1});
+%             exn3_2 = d3.exn;
+%             exn3_2.Trials = exn3_2.Trials(idx{2});
+% %             exn5_0 = d5.exn;
+% %             exn5_0.Trials = exn5_0.Trials(idx{1});
+% %             exn5_2 = d5.exn;
+% %             exn5_2.Trials = exn5_2.Trials(idx{2});
+% %             
 %             % analysis
-%             Out3{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn4_0, exn4_2, 'LFP_prepro');
-%             Out4{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn6_0, exn6_2, 'iLFP_prepro');
+%             Out1{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn3_0, exn3_2, 'LFP_prepro');
+% %             Out2{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn5_0, exn5_2, 'iLFP_prepro');
 %             
-            % stimlus type
-            if stmtype(i) == 0
-                stmtype(i) = find(strcmp(stmtypes, d0.ex.exp.e1.type));
-            end
-
-            % is mango
-            animal(i) = strcmp(lfplist{i}{1}(1:2), 'ma');
-
-            % is 5HT
-            is5ht(i) = ismember(1, contains(lfplist{i}{2}, '5HT'));
-
-            disp(['session ' num2str(i) ' analyzed!'])
-        catch
-            disp(['session ' num2str(i) ' error'])
-        end
-    end
-    % unit info
-%     outs = cellfun('isempty', Out1) | cellfun('isempty', Out2) | ...
-%         cellfun('isempty', Out3) | cellfun('isempty', Out4);
-    outs = cellfun('isempty', Out1);
-    lfplist = lfplist(outs==0);
-    Lfps_all.lfplist = lfplist;
-    Lfps_all.stmtype = stmtype(outs==0);
-    Lfps_all.animal = animal(outs==0);
-    Lfps_all.is5ht = is5ht(outs==0);
-    Lfps_all.goodunit = goodunit(outs==0);
-
-    % results from analysis    
-%     iLfps_all = Lfps_all;
-%     Lfps_dr = Lfps_all;
-%     iLfps_dr = Lfps_all;
-    Lfps_all.LFP_prepro = Out1(outs==0); 
-%     iLfps_all.LFP_prepro = Out2(outs==0); 
-%     Lfps_dr.LFP_prepro = Out3(outs==0); 
-%     iLfps_dr.LFP_prepro = Out4(outs==0); 
-    
-    % split by stimulus type
-    fields = {'lfplist', 'stmtype', 'animal', 'is5ht', 'goodunit'};
-    for s = 1:length(stmtypes)
-        idx = Lfps_all.stmtype == s;
-        if s > 1
-            continue
-        end
-        % baseline 
-        for f = 1:length(fields)
-            Lfps.(fields{f}) = Lfps_all.(fields{f})(idx);
-%             iLfps.(fields{f}) = iLfps_all.(fields{f})(idx);
-        end
-        
-        Lfps.LFP_prepro = Lfps_all.LFP_prepro(idx);
-%         iLfps.LFP_prepro = iLfps_all.LFP_prepro(idx);
-        
-        % autosave
-        save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_sc/Lfps_mp_' stmtypes{s} '_base.mat'], 'Lfps', '-v7.3')
-%         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_sc/iLfps_mp_' stmtypes{s} '_base.mat'], 'iLfps', '-v7.3')
-        
-        % drug
+%             % drug -----------------------------------
+% %             d2 = load([loadpath lfplist{i}{2}], 'ex');
+% %             d4 = load([loadpath_mp 'Trials/' lfplist{i}{2}], 'exn');
+% %             d6 = load([loadpath_mp 'iTrials/' lfplist{i}{2}], 'exn');
+% %             
+% %             % split trials based on sc
+% %             [ex, idx] = ex_spliter(d2.ex, 'sc');
+% %             exn4_0 = d4.exn;
+% %             exn4_0.Trials = exn4_0.Trials(idx{1});
+% %             exn4_2 = d4.exn;
+% %             exn4_2.Trials = exn4_2.Trials(idx{2});
+% %             exn6_0 = d6.exn;
+% %             exn6_0.Trials = exn6_0.Trials(idx{1});
+% %             exn6_2 = d6.exn;
+% %             exn6_2.Trials = exn6_2.Trials(idx{2});
+% %             
+% %             % analysis
+% %             Out3{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn4_0, exn4_2, 'LFP_prepro');
+% %             Out4{i} = pair_stmLFP4mp(ex{1}, ex{2}, exn6_0, exn6_2, 'iLFP_prepro');
+% %             
+%             % stimlus type
+%             if stmtype(i) == 0
+%                 stmtype(i) = find(strcmp(stmtypes, d0.ex.exp.e1.type));
+%             end
+% 
+%             % is mango
+%             animal(i) = strcmp(lfplist{i}{1}(1:2), 'ma');
+% 
+%             % is 5HT
+%             is5ht(i) = ismember(1, contains(lfplist{i}{2}, '5HT'));
+% 
+%             disp(['session ' num2str(i) ' analyzed!'])
+%         catch
+%             disp(['session ' num2str(i) ' error'])
+%         end
+%     end
+%     % unit info
+% %     outs = cellfun('isempty', Out1) | cellfun('isempty', Out2) | ...
+% %         cellfun('isempty', Out3) | cellfun('isempty', Out4);
+%     outs = cellfun('isempty', Out1);
+%     lfplist = lfplist(outs==0);
+%     Lfps_all.lfplist = lfplist;
+%     Lfps_all.stmtype = stmtype(outs==0);
+%     Lfps_all.animal = animal(outs==0);
+%     Lfps_all.is5ht = is5ht(outs==0);
+%     Lfps_all.goodunit = goodunit(outs==0);
+% 
+%     % results from analysis    
+% %     iLfps_all = Lfps_all;
+% %     Lfps_dr = Lfps_all;
+% %     iLfps_dr = Lfps_all;
+%     Lfps_all.LFP_prepro = Out1(outs==0); 
+% %     iLfps_all.LFP_prepro = Out2(outs==0); 
+% %     Lfps_dr.LFP_prepro = Out3(outs==0); 
+% %     iLfps_dr.LFP_prepro = Out4(outs==0); 
+%     
+%     % split by stimulus type
+%     fields = {'lfplist', 'stmtype', 'animal', 'is5ht', 'goodunit'};
+%     for s = 1:length(stmtypes)
+%         idx = Lfps_all.stmtype == s;
+%         if s > 1
+%             continue
+%         end
+%         % baseline 
 %         for f = 1:length(fields)
-%             Lfps.(fields{f}) = Lfps_dr.(fields{f})(idx);
-%             iLfps.(fields{f}) = iLfps_dr.(fields{f})(idx);
+%             Lfps.(fields{f}) = Lfps_all.(fields{f})(idx);
+% %             iLfps.(fields{f}) = iLfps_all.(fields{f})(idx);
 %         end
 %         
-%         Lfps.LFP_prepro = Lfps_dr.LFP_prepro(idx);
-%         iLfps.LFP_prepro = iLfps_dr.LFP_prepro(idx);
+%         Lfps.LFP_prepro = Lfps_all.LFP_prepro(idx);
+% %         iLfps.LFP_prepro = iLfps_all.LFP_prepro(idx);
 %         
 %         % autosave
-%         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_sc/Lfps_mp_' stmtypes{s} '_drug.mat'], 'Lfps', '-v7.3')
-%         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_sc/iLfps_mp_' stmtypes{s} '_drug.mat'], 'iLfps', '-v7.3')
-        
-        disp([stmtypes{s} ': lfps saved!'])
-    end
-end
+%         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_sc/Lfps_mp_' stmtypes{s} '_base.mat'], 'Lfps', '-v7.3')
+% %         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_sc/iLfps_mp_' stmtypes{s} '_base.mat'], 'iLfps', '-v7.3')
+%         
+%         % drug
+% %         for f = 1:length(fields)
+% %             Lfps.(fields{f}) = Lfps_dr.(fields{f})(idx);
+% %             iLfps.(fields{f}) = iLfps_dr.(fields{f})(idx);
+% %         end
+% %         
+% %         Lfps.LFP_prepro = Lfps_dr.LFP_prepro(idx);
+% %         iLfps.LFP_prepro = iLfps_dr.LFP_prepro(idx);
+% %         
+% %         % autosave
+% %         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_sc/Lfps_mp_' stmtypes{s} '_drug.mat'], 'Lfps', '-v7.3')
+% %         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/Lfps_pair_sc/iLfps_mp_' stmtypes{s} '_drug.mat'], 'iLfps', '-v7.3')
+%         
+%         disp([stmtypes{s} ': lfps saved!'])
+%     end
+% end
 
 % basic LFP analysis =========================
 if sum(strcmp(type, 'all')) || sum(strcmp(type,  'lfps_pair_mp_nothin_sc'))
@@ -1827,7 +1827,7 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'lfps_pair_mp_nothin_sc'))
    
     % load data and lists
     loadpath = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/LFPprepro/'];    
-    loadpath_mp = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/MPprepro/'];
+    loadpath_mp = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/MPprepro_RC/'];
     a = load([loadpath 'lfplist.mat'], 'lfplist');  
     b = load([mypath '/Corinna/SharedCode/Katsu/list_RC.mat'], 'list_RC'); 
     c = load([mypath '/Corinna/SharedCode/Katsu/incl_i_all_stim_cond_2007.mat'], 'incl_i'); 
@@ -1860,7 +1860,7 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'lfps_pair_mp_nothin_sc'))
 %             d5 = load([loadpath_mp 'iTrials/' lfplist{i}{1}], 'exn');
             
             % split trials based on sc
-            [ex0, ex2, sidx1, sidx2] = ex_spliter_es(d0.ex, es, thre, wnd);
+            [ex0, ex2, sidx1, sidx2] = ex_spliter_es(d0.ex, es, thre, [0.8 0]);
             exn3_0 = d3.exn;
             exn3_0.Trials = exn3_0.Trials(sidx1);
             exn3_2 = d3.exn;
