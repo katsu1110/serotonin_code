@@ -135,23 +135,19 @@ for i = 1:lenses
         hold on
         xr = [1:size(mat_e_ses, 2)]*cbem.cond(d).results{i}.dt*1e3;
         plot(xr, squeeze(mat_e_ses(i, :, d)), 'color', col)
-        xlim([xr(1) xr(end)])
+        xlim([x length(me)])
         
         % I filter
         figure(f+1);
         subplot(nrow, ncol, i)
-        hold on        
-        xr = [1:size(mat_i_ses, 2)]*cbem.cond(d).results{i}.dt*1e3;
-        plot(xr, squeeze(mat_i_ses(i, :, d)), 'color', col)
-        xlim([xr(1) xr(end)])
+        hold on
+        plot([1:size(mat_i_ses, 2)]*cbem.cond(d).results{i}.dt*1e3, squeeze(mat_i_ses(i, :, d)), 'color', col)
         
         % H filter
         figure(f+2);
         subplot(nrow, ncol, i)
         hold on
-        xr = [1:size(mat_h_ses, 2)]*cbem.cond(d).results{i}.dt*1e3;
-        plot(xr, squeeze(mat_h_ses(i, :, d)), 'color', col)
-        xlim([xr(1) xr(end)])
+        plot([1:size(mat_h_ses, 2)]*cbem.cond(d).results{i}.dt*1e3, squeeze(mat_h_ses(i, :, d)), 'color', col)
     end
     for j = 1:3
         figure(f+j-1);
