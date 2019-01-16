@@ -939,11 +939,11 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
             for d = 1:2
                 sz = size(datast{i}.cond(d).spectrogram.S{stmidx(i, s)});
                 if sz(2) > sz(1)
-%                     S = 10*log10(datast{i}.cond(d).spectrogram.S{stmidx(i, s)});
-                    S = datast{i}.cond(d).spectrogram.S{stmidx(i, s)};
+                    S = 10*log10(datast{i}.cond(d).spectrogram.S{stmidx(i, s)});
+%                     S = datast{i}.cond(d).spectrogram.S{stmidx(i, s)};
                 else
-%                     S = 10*log10(datast{i}.cond(d).spectrogram.S{stmidx(i, s)})';
-                    S = datast{i}.cond(d).spectrogram.S{stmidx(i, s)}';
+                    S = 10*log10(datast{i}.cond(d).spectrogram.S{stmidx(i, s)})';
+%                     S = datast{i}.cond(d).spectrogram.S{stmidx(i, s)}';
                 end 
                 if sum(isnan(S(:)))==0
                     S = imresize(S, [lenf, lent]);
