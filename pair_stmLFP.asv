@@ -313,7 +313,7 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'sta
                 
                 % obtain corresponding spectrogram
                 [~, f, t, p] = spectrogram_frange(para.cond(d).trials{i}(n).(lfpfield), 95, fs, [0 100]);
-                sp = mat_align(p, lenlfp);
+                sp = imresize(p, [length(f), lenlfp]);
                 sttfa = getSTTFA(sp, para.cond(d).trials{i}(n).LFP_prepro_time, ...
                     para.cond(d).spk{j, i}{n}, para.wnd, fs);      
                 
@@ -505,7 +505,7 @@ f = f(outrange);
 function newmat = mat_align(mat, new_t)
 nr = size(mat, 1);
 old_t = size(mat, 2);
-newmat = nan(nr, new_t);
+newmat = nan(nr, length(new_t));
 for r = 1:nr
-    newmat(r, :) = interp1(1:old_t, mat(r,:), linspace(1, old_t, new_t));
+    newmat(r, :) = interp1(1:old_t, mat(r,:), 1);
 end
