@@ -1846,7 +1846,7 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'lfps_pair_mp_nothin_sc'))
 %     Out4 = cell(1, N);
     goodunit = zeros(1, N); is5ht = zeros(1, N);
     stmtype = zeros(1, N); animal = zeros(1, N); 
-    for i = 1:N            
+    parfor i = 1:N            
         % goodunit
         if isempty(strfind(lfplist{i}{1}, 'xRC'))
             goodunit(i) = ismember(i, incl_i);
@@ -1855,7 +1855,7 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'lfps_pair_mp_nothin_sc'))
             goodunit(i) = ismember(i, list_RC);
             stmtype(i) = 1;
         end
-%         try
+        try
             % load =======================
             % baseline ---------------------------
             d0 = load([loadpath lfplist{i}{1}], 'ex');
@@ -1909,9 +1909,9 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'lfps_pair_mp_nothin_sc'))
             is5ht(i) = ismember(1, contains(lfplist{i}{2}, '5HT'));
 
             disp(['session ' num2str(i) ' analyzed!'])
-%         catch
-%             disp(['session ' num2str(i) ' error'])
-%         end
+        catch
+            disp(['session ' num2str(i) ' error'])
+        end
     end
     % unit info
 %     outs = cellfun('isempty', Out1) | cellfun('isempty', Out2) | ...

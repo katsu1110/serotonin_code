@@ -192,34 +192,34 @@ for i = 1:lenses
         % r rate
         at(i, 3, s) = datast{i}.cond(2).spk_tu{1}(s, 1)/datast{i}.cond(1).spk_tu{1}(s, 1);
         % noise corr base
-        sua0ori = round(dur*datast{i}.cond(1).lfprel.mat{s}(:, 1))';
+        sua0ori = round(dur*datast{i}.cond(1).mat{s}(:, 1))';
 %         sua0 = filter(b1, a1, sua0ori);
         sua0 = locdetrend(sua0ori, 1, [20, 1]);
 %         sua0 = sua0 - mean(sua0);
         sua0 = sua0 - mean(sua0) + dur*at(i, 1, s);
         sua0(sua0 <= 0) = 0;
         sua0 = round(sua0);
-        mua0 = round(dur*datast{i}.cond(1).lfprel.mat{s}(:, 2))';
+        mua0 = round(dur*datast{i}.cond(1).mat{s}(:, 2))';
 %         mua0 = filter(b1, a1, mua0);
         mua0 = locdetrend(mua0, 1, [20, 1]);
 %         mua0 = mua0 - mean(mua0);
-        mua0 = round(mua0 - mean(mua0) + dur*mean(datast{i}.cond(1).lfprel.mat{s}(:, 2)));
+        mua0 = round(mua0 - mean(mua0) + dur*mean(datast{i}.cond(1).mat{s}(:, 2)));
         rr = corrcoef(zscore(sua0), zscore(mua0));
         at(i, 4, s) = rr(1,2);
         at(i, 4, s) = 0.5*log((1+at(i, 4, s))/(1-at(i, 4, s)));
         % noise corr drug
-        sua2ori = dur*datast{i}.cond(2).lfprel.mat{s}(:, 1)';
+        sua2ori = dur*datast{i}.cond(2).mat{s}(:, 1)';
 %         sua2 = filter(b1, a1, sua2ori);
         sua2 = locdetrend(sua2ori, 1, [20, 1]);
 %         sua2 = sua2 - mean(sua2);
         sua2 = sua2 - mean(sua2) + dur*at(i, 2, s);
         sua2(sua2 <= 0) = 0;
         sua2 = round(sua2);
-        mua2 = dur*datast{i}.cond(2).lfprel.mat{s}(:, 2)';
+        mua2 = dur*datast{i}.cond(2).mat{s}(:, 2)';
 %         mua2 = filter(b1, a1, mua2);
         mua2 = locdetrend(mua2, 1, [20, 1]);
 %         mua2 = mua2 - mean(mua2);
-        mua2 = round(mua2 - mean(mua2) + dur*mean(datast{i}.cond(2).lfprel.mat{s}(:, 2)));
+        mua2 = round(mua2 - mean(mua2) + dur*mean(datast{i}.cond(2).mat{s}(:, 2)));
         rr = corrcoef(zscore(sua2), zscore(mua2));
         at(i, 5, s) = rr(1,2);
         at(i, 5, s) = 0.5*log((1+at(i, 5, s))/(1-at(i, 5, s)));
@@ -384,16 +384,16 @@ for i = 1:lenses
                         
             % LFP SD ==============
             % base 
-            at(i, 111 + 3*(b-1), s) = nanstd(datast{i}.cond(1).lfprel.mat{s}(:, 6+b));
+            at(i, 111 + 3*(b-1), s) = nanstd(datast{i}.cond(1).mat{s}(:, 6+b));
             % drug
-            at(i, 112 + 3*(b-1), s) = nanstd(datast{i}.cond(2).lfprel.mat{s}(:, 6+b));
+            at(i, 112 + 3*(b-1), s) = nanstd(datast{i}.cond(2).mat{s}(:, 6+b));
             % d
             at(i, 113 + 3*(b-1), s) = at(i, 111 + 3*(b-1), s) - at(i, 112 + 3*(b-1), s);   
         end  
         % LFP SD base 
-        at(i, 129, s) = nanstd(datast{i}.cond(1).lfprel.mat{s}(:, 5));
+        at(i, 129, s) = nanstd(datast{i}.cond(1).mat{s}(:, 5));
         % LFP SD drug
-        at(i, 130, s) = nanstd(datast{i}.cond(2).lfprel.mat{s}(:, 5));
+        at(i, 130, s) = nanstd(datast{i}.cond(2).mat{s}(:, 5));
         % d LFP SD
         at(i, 131, s) = at(i, 129, s) - at(i, 130, s);  
         % LFP power ratio base 

@@ -939,17 +939,17 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
             for d = 1:2
                 sz = size(datast{i}.cond(d).spectrogram.S{stmidx(i, s)});
                 if sz(2) > sz(1)
-                    S = 10*log10(datast{i}.cond(d).spectrogram.S{stmidx(i, s)});
-%                     S = datast{i}.cond(d).spectrogram.S{stmidx(i, s)};
+%                     S = 10*log10(datast{i}.cond(d).spectrogram.S{stmidx(i, s)});
+                    S = datast{i}.cond(d).spectrogram.S{stmidx(i, s)};
                 else
-                    S = 10*log10(datast{i}.cond(d).spectrogram.S{stmidx(i, s)})';
-%                     S = datast{i}.cond(d).spectrogram.S{stmidx(i, s)}';
+%                     S = 10*log10(datast{i}.cond(d).spectrogram.S{stmidx(i, s)})';
+                    S = datast{i}.cond(d).spectrogram.S{stmidx(i, s)}';
                 end 
                 if sum(isnan(S(:)))==0
                     S = imresize(S, [lenf, lent]);
 %                     Sres = S - repmat(nanmean(S(:, spe_t < 0), 2), 1, lent);
 %                     Sall(i, :, :, d) = Sres(:, end - length(spe_t)+1:end);
-                    Sall(i, :, :, d) = S(:, end - length(spe_t)+1:end);
+                    Sall(i, :, :, d) = S(:, end - length(spe_t)+1:end);                    
                 end
                 Sabs = nanmean(S(:, spe_t > datast{end}.window{end}(1)), 2);
                 power(i, :, d) = Sabs;
@@ -1045,7 +1045,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
                     yy{1}(2) = yy_temp(2);
                 end
 %                 set(gca, 'YScale', 'log')
-%                 set(gca, 'XScale', 'log')
+                set(gca, 'XScale', 'log')
                 xlim([3 48])
                 set(gca, 'box', 'off', 'tickdir', 'out', 'XScale', 'log')
                 if k==1
@@ -1104,7 +1104,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
                 if yy_temp(2) > yy{2}(2)
                     yy{2}(2) = yy_temp(2);
                 end
-                set(gca, 'XScale', 'log')                
+                set(gca, 'XScale', 'log')        
                 xlim([3 48])
                 set(gca, 'box', 'off', 'tickdir', 'out')
                 if k==1
@@ -1117,7 +1117,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
                     end
                 end
 
-                % accrage PSDs ==========================
+                % average PSDs ==========================
                 figure(j + 1 + s);
                 clim = {zeros(1, 2), zeros(1, 2)};
                 for d = 1:2

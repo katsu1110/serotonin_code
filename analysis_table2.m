@@ -229,10 +229,13 @@ for i = 1:lenses
         spe_t = datast{i}.cond(1).spectrogram.t{1};
         lent = length(spe_t);
         spe_t = linspace(-0.1, stmdur, lent);
-%         S1 = 10*log10(datast{i}.cond(1).spectrogram.S{stmidx(i, s)})';
-%         S2 = 10*log10(datast{i}.cond(2).spectrogram.S{stmidx(i, s)})';
-        S1 = datast{i}.cond(1).spectrogram.S{stmidx(i, s)}';
-        S2 = datast{i}.cond(2).spectrogram.S{stmidx(i, s)}';
+        S1 = datast{i}.cond(1).spectrogram.S{stmidx(i, s)};
+        S2 = datast{i}.cond(2).spectrogram.S{stmidx(i, s)};
+        sz = size(datast{i}.cond(1).spectrogram.S{stmidx(i, s)});
+        if sz(2) < sz(1)
+            S1 = datast{i}.cond(1).spectrogram.S{stmidx(i, s)}';
+            S2 = datast{i}.cond(2).spectrogram.S{stmidx(i, s)}';
+        end
         freqc = datast{i}.cond(1).coherence.f{stmidx(i, s)};
         coh1 = datast{i}.cond(1).coherence.C{stmidx(i, s)};
         coh2 = datast{i}.cond(2).coherence.C{stmidx(i, s)};
@@ -245,9 +248,11 @@ for i = 1:lenses
             
             % overall power =============
             % base 
-            at(i, 10 + 3*(b-1), s) = nanmean(nanmean(S1(frange, spe_t > datast{i}.window{end}(1))));
+%             at(i, 10 + 3*(b-1), s) = nanmean(nanmean(S1(frange, spe_t > datast{i}.window{end}(1))));
+            at(i, 10 + 3*(b-1), s) = nanmean(nanmean(10*log10(S1(frange, spe_t > datast{i}.window{end}(1)))));
             % drug 
-            at(i, 11 + 3*(b-1), s) = nanmean(nanmean(S2(frange, spe_t > datast{i}.window{end}(1))));
+%             at(i, 11 + 3*(b-1), s) = nanmean(nanmean(S2(frange, spe_t > datast{i}.window{end}(1))));
+            at(i, 11 + 3*(b-1), s) = nanmean(nanmean(10*log10(S2(frange, spe_t > datast{i}.window{end}(1)))));
             % d
             at(i, 12 + 3*(b-1), s) = at(i, 10 + 3*(b-1), s) - at(i, 11 + 3*(b-1), s);
             

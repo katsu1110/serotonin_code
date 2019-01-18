@@ -14,13 +14,8 @@ stimdur = getStimDur(ex); % stimulus presentation duration
 % stimulus per trials
 label_seq = label4StmPerTr(ex);
 
-% notch filter variables
-Fs = 1000;              % sampling frequency
-notchf = [49 51];     % notch filter frequency
-notchord = 2;           % filter order
-
-bpf = [3 90];     % bandpass filter cutoff frequency
-bpord = [8 10];            % filter order
+% sampling frequency
+Fs = 1000;              
 
 % time relative to stimulus onset to filter and interpolate LFP
 t_off = -0.1;
@@ -126,19 +121,27 @@ for n = 1:N
 end
 
 % filtering ==================================
-% define notch filter
-d = designfilt('bandstopiir','FilterOrder',notchord, ...
-               'HalfPowerFrequency1', notchf(1),'HalfPowerFrequency2', notchf(2), ...
-               'DesignMethod','butter','SampleRate',Fs);
-lfps = filter(d, lfps);
 if filt
+    % filter parameters
+    notchf = [49 51];     % notch filter frequency
+    notchord = 2;           % filter order
+
+    bpf = [3 90];     % bandpass filter cutoff frequency
+    bpord = [8 10];            % filter order
+    
+    % define notch filter
+    d = designfilt('bandstopiir','FilterOrder',notchord, ...
+                   'HalfPowerFrequency1', notchf(1),'HalfPowerFrequency2', notchf(2), ...
+                   'DesignMethod','butter','SampleRate',Fs);
+    lfps = filtfilt(d, lfps);
+
     % define bandpass filter for LFPs (Nauhaus et al., 2009)
     [b_high, a_high] = butter(bpord(1), bpf(1)/(Fs/2), 'high');
     [b_low, a_low] = butter(bpord(2), bpf(2)/(Fs/2), 'low');
 
     % LFP =======================
-    lfps = filter(b_high, a_high, lfps);
-    lfps = filter(b_low, a_low, lfps);
+    lfps = filtfilt(b_high, a_high, lfps);
+    lfps = filtfilt(b_low, a_low, lfps);
 end
 
 % filter pupil======================
@@ -165,7 +168,7 @@ for n = 1:N
 %     ex.Trials(n).Eye_prepro.psL = psL(eye_timing(n, 1):eye_timing(n, 2));
 %     ex.Trials(n).Eye_prepro.dpsR = dpsR(eye_timing(n, 1):eye_timing(n, 2));
 %     ex.Trials(n).Eye_prepro.dpsL = dpsL(eye_timing(n, 1):eye_timing(n, 2));
-    
+
     % downsample to the stimulus frequency    
     ex.Trials(n).Eye_prepro.RX = downsample(eyeRX(eye_timing(n, 1):eye_timing(n, 2)), ds);
     ex.Trials(n).Eye_prepro.RY = downsample(eyeRY(eye_timing(n, 1):eye_timing(n, 2)), ds);
