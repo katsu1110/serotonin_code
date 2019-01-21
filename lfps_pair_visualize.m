@@ -594,7 +594,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                        title(mdlnames{m})
                    end
                     ylabel({animals{a}, pairnames{k, 2}})
-                    set(gca, 'XTick', 1:lenp(m), 'XTickLabel', [])
+                    set(gca, 'XTick', 1:lenp(m), 'XTickLabel', cell(1, lenp(m)))
                     set(gca, 'box', 'off', 'tickdir', 'out')
                    if k == ndrug
                        if a == lena
@@ -635,6 +635,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'glm'))==1
                            end
 %                            bar(p, me(p), 'FaceColor', barcol, 'EdgeColor', 'k')
                        end
+                       disp([animals{a} ': ' vars{m}{p} ': p = ' num2str(pval*lenp(m))]) 
 %                        hold on;
 %                        errorbar(p, me(p), sem(p), 'color', barcol, 'capsize', 0)
 %                        hold on;

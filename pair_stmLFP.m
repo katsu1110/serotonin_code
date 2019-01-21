@@ -351,6 +351,13 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'sta
             end
         end  
     end     
+    
+    % store only average in spectrogram
+    for d = 1:2
+        for i = 1:lenv
+            para.cond(d).spectrogram.S{i} = nanmean(para.cond(d).spectrogram.S{i}, 3);            
+        end   
+    end
 end
 
 
