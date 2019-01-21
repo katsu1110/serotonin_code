@@ -27,11 +27,13 @@ for i = 1:nspk
     
     % take all 
     if tstrt < 1
-        delta = abs(tstrt) + 1;
-        seg = [lfptrace(1)*ones(1, delta), lfptrace(1:ncol-delta)];
+        continue
+%         delta = abs(tstrt) + 1;
+%         seg = [lfptrace(1)*ones(1, delta), lfptrace(1:ncol-delta)];
     elseif tend > lent
-        delta = tend - lent;
-        seg = [lfptrace(end-ncol+delta:end), lfptrace(end)*ones(1, delta-1)];
+        continue
+%         delta = tend - lent;
+%         seg = [lfptrace(end-ncol+delta:end), lfptrace(end)*ones(1, delta-1)];
     else
         seg = lfptrace(tstrt:tend);
     end

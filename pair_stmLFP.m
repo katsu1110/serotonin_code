@@ -283,8 +283,8 @@ end
 % Spectrogram =============================
 if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'spectrogram'))
     ts = 0.3; % 3 tapers
-    params = define_params(fs, ts, 1);
-    movwin = [ts, 0.01];
+    params = define_params(fs, ts, 0);
+    movwin = [ts, 0.001];
     for d = 1:2
         for i = 1:lenv
             % spectrogram by chronux toolbox
@@ -312,8 +312,10 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'sta
                     para.cond(d).spk{j, i}{n}, para.wnd, fs);       
                 
                 % obtain corresponding spectrogram
-                [~, f, t, p] = spectrogram_frange(para.cond(d).trials{i}(n).(lfpfield), 95, fs, [0 100]);
-                sp = mat_align(p, lenlfp);
+%                 [~, f, ~, p] = spectrogram_frange(para.cond(d).trials{i}(n).(lfpfield), 95, fs, [0 100]);
+%                 sp = mat_align(p, lenlfp);
+                sp = para.cond(d).spectrogram.S{i}(:, :, n);
+                sp = mat_align(sp', lenlfp);
                 sttfa = getSTTFA(sp, para.cond(d).trials{i}(n).LFP_prepro_time, ...
                     para.cond(d).spk{j, i}{n}, para.wnd, fs);      
                 
@@ -328,8 +330,7 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'sta
                         tfa = tfa + nansum(sttfa, 3);
                     end                    
                 end
-            end
-            para.cond(d).sta.t{i} = linspace(-para.wnd, para.wnd, lenlfp);
+            end            
             if ~isempty(sta)
                 % STA as a function of stimulus type
                 para.cond(d).sta.mean(i,:) = nanmean(sta, 1);
@@ -337,12 +338,14 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'sta
                 para.cond(d).sta.nspk(i) = size(sta, 1);
 
                 % mean STA spectrogram
-                para.cond(d).sta.f{i} = f;
+                para.cond(d).sta.t{i} = linspace(-para.wnd, para.wnd, length(para.cond(d).sta.mean(1,:)));
+                para.cond(d).sta.f{i} = para.cond(d).spectrogram.f{i};
                 para.cond(d).sta.p{i} = tfa./para.cond(d).sta.nspk(i);
             else
                 para.cond(d).sta.mean(i,:) = nan(1, length(-para.wnd:1/fs:para.wnd));
                 para.cond(d).sta.sd(i,:) = para.cond(d).sta.mean(i,:);
                 para.cond(d).sta.nspk(i) = 0;
+                para.cond(d).sta.t{i} = nan;
                 para.cond(d).sta.f{i} = nan;
                 para.cond(d).sta.p{i} = nan;
             end

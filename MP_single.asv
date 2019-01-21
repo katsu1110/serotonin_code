@@ -57,11 +57,8 @@ MPtrials = struct('signal', [], 'energy', []);
 
 % load data
 gaborInfo = getGaborData(folderName, filename, 1);
+rm
 parfor k = 1:ntr
-    % 50 Hz line noise and >100 Hz are removed
-    cf = gaborInfo{k}.gaborData(2, :); % atom frequency
-    atomList = find(cf < 50 | (cf > 50 & cf < 100));    
-    
     % signal
     mp_signal = reconstructSignalFromAtomsMPP(...
         gaborInfo{k}.gaborData, L, wrap, atomList);
