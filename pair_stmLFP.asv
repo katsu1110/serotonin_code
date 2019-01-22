@@ -283,17 +283,15 @@ end
 % Spectrogram =============================
 if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'spectrogram'))
     ts = 0.3; % 3 tapers
-    params = define_params(fs, ts, 1);
+    params = define_params(fs, ts, 0);
     movwin = [ts, 0.01];
     for d = 1:2
         for i = 1:lenv
             % spectrogram by chronux toolbox
             [para.cond(d).spectrogram.S{i}, para.cond(d).spectrogram.t{i}, ...
                 para.cond(d).spectrogram.f{i}] = mtspecgramc(para.cond(d).lfpfull{i}', movwin, params); 
-%             % stft
-%             [~, para.cond(d).spectrogram.f{i}, para.cond(d).spectrogram.t{i}, p] = ...
-%                 spectrogram_frange(para.cond(d).lfpfull{i}, 95, fs, [0 100]);
-%             para.cond(d).spectrogram.S{i} = nanmean(p, 3);
+            % fft
+            [s, f, t, p] = spectrogram_frange(v, 95, fs, [0 100]);
         end   
     end
 end
@@ -301,11 +299,14 @@ end
 
 % Spike-triggered LFP ====================
 if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'sta'))
-%     lenlfp = size(para.cond(d).lfpfull{1}, 2);
+    lenlfp = size(para.cond(d).lfpfull{1}, 2);
+    ts = 0.1; % 1 taper
+    params = define_params(fs, ts, 1);
+    movwin = [ts, 0.001];
     for d = 1:2
         for i = 1:lenv
             sta = [];
-%             tfa = [];
+            tfa = [];
             para.cond(d).sta.f{i} = [];
             para.cond(d).sta.t{i} = [];
             para.cond(d).sta.p{i} = [];
@@ -342,12 +343,9 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'sta
                 para.cond(d).sta.nspk(i) = size(sta, 1);
 
                 % mean STA spectrogram
-                [~, para.cond(d).sta.f{i}, ~, p] = ...
-                    spectrogram_frange(para.cond(d).sta.mean(i,:), 95, fs, [0 100]);
-                para.cond(d).sta.p{i} = nanmean(p, 3);
-%                 [para.cond(d).sta.p{i}, para.cond(d).sta.t{i}, ...
-%                     para.cond(d).sta.f{i}] = mtspecgramc(sta', movwin, params);
-                para.cond(d).sta.t{i} = linspace(-para.wnd, para.wnd, length(para.cond(d).sta.mean(1,:)));
+                [para.cond(d).sta.p{i}, para.cond(d).sta.t{i}, ...
+                    para.cond(d).sta.f{i}] = mtspecgramc(sta', movwin, params);
+%                 para.cond(d).sta.t{i} = linspace(-para.wnd, para.wnd, length(para.cond(d).sta.mean(1,:)));
 %                 para.cond(d).sta.f{i} = para.cond(d).spectrogram.f{i};
 %                 para.cond(d).sta.p{i} = tfa./para.cond(d).sta.nspk(i);
             else
@@ -361,12 +359,12 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'sta
         end  
     end     
     
-%     % store only average in spectrogram
-%     for d = 1:2
-%         for i = 1:lenv
-%             para.cond(d).spectrogram.S{i} = nanmean(para.cond(d).spectrogram.S{i}, 3);            
-%         end   
-%     end
+    % store only average in spectrogram
+    for d = 1:2
+        for i = 1:lenv
+            para.cond(d).spectrogram.S{i} = nanmean(para.cond(d).spectrogram.S{i}, 3);            
+        end   
+    end
 end
 
 
@@ -521,12 +519,15 @@ for n = 1:ntr
     [s_temp, f_temp, t, p_temp] = spectrogram(v(n, :), nsc, nov, nff, fs);
     if n==1
         outrange = f_temp >= frange(1) & f_temp <= frange(2);
-        f = f_temp(outrange)';
+
+        f = f_temp(outrange);
         s = nan(length(f), length(t), ntr);
         p = s;
+        s(:, :, 1) = s_temp(outrange, :);
+        p(:, :, 1) = p_temp(outrange, :);
+    else
+        
     end
-    s(:, :, n) = s_temp(outrange, :);
-    p(:, :, n) = p_temp(outrange, :);
 end
 
 function newmat = mat_align(mat, new_t)
