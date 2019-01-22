@@ -120,6 +120,13 @@ for n = 1:N
 %     eye_timing(n, 4) = round((lenv*enpos)/ex.Trials(n).Eye.n);
 end
 
+% remove nans ===============================
+lfps = nan_interp(lfps);
+psR = nan_interp(psR);
+psL = nan_interp(psL);
+dpsR = nan_interp(dpsR);
+dpsL = nan_interp(dpsL);
+
 % filtering ==================================
 if filt
     % filter parameters

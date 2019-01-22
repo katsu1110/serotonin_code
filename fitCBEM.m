@@ -1,4 +1,4 @@
-function CBEM_fit = fitCBEM(ex, dt, seqfield, spkfield, figon)
+function CBEM_fit = fitCBEM(ex, dt, seqfield, spkfield)
 %% 
 % fit CBEM (Letimer et al., 2018) to the spike counts
 %
@@ -104,48 +104,6 @@ fprintf('Fitting CBEM with LN excitatory and inhibitory conductances...\n');
 % [~,CBEMnll]      = fitCBEMfull(CBEM_fit,SpikeStim,     spkHist,     Y,     addOnesColumnToStim,false,true);
 
 fprintf('done.\n');
-
-%% 
-% plot filters 
-if figon
-    figure(1);
-    clf;
-    subplot(1,3,1);
-    hold on
-%     plot((1:size(CBEM_true.stimBasisVectors,1))*CBEM_true.dt*1e3,CBEM_true.stimBasisVectors*CBEM_true.k_s{1}(1:CBEM_true.stimNumBasisVectors));
-    plot((1:size(CBEM_fit.stimBasisVectors,1))*CBEM_fit.dt*1e3  ,CBEM_fit.stimBasisVectors*CBEM_fit.k_s{1}(1:CBEM_fit.stimNumBasisVectors));
-    %CBEM_true.k_s{1}(1:10) holds the filter weights, CBEM_true.k_s{1}(11) is a baseline weight 
-
-    ylabel('filter weight');
-    xlabel('time (ms)');
-    title('excitatory filter');
-    legend({'true filter','estimated filter'});
-    hold off
-
-
-    subplot(1,3,2);
-    hold on
-%     plot((1:size(CBEM_true.stimBasisVectors,1))*CBEM_true.dt*1e3,CBEM_true.stimBasisVectors*CBEM_true.k_s{2}(1:CBEM_true.stimNumBasisVectors));
-    plot((1:size(CBEM_fit.stimBasisVectors,1))*CBEM_fit.dt*1e3  ,CBEM_fit.stimBasisVectors*CBEM_fit.k_s{2}(1:CBEM_fit.stimNumBasisVectors));
-
-    ylabel('filter weight');
-    xlabel('time (ms)');
-    title('inhibitory filter');
-    legend({'true filter','estimated filter'});
-    hold off
-
-
-    subplot(1,3,3);
-    hold on
-%     plot((1:size(CBEM_true.spkHistBasisVectors,1))*CBEM_true.dt*1e3,CBEM_true.spkHistBasisVectors*CBEM_true.h_spk(1:CBEM_true.spkHistNumBasisVectors));
-    plot((1:size(CBEM_fit.spkHistBasisVectors,1))*CBEM_fit.dt*1e3  ,CBEM_fit.spkHistBasisVectors*CBEM_fit.h_spk(1:CBEM_fit.spkHistNumBasisVectors));
-
-    ylabel('filter weight');
-    xlabel('time (ms)');
-    title('spike history filter');
-    legend({'true filter','estimated filter'});
-    hold off
-end
 
 %% Simulating from model fit
 CBEM_fit.orig.stm = X; CBEM_fit.orig.spk = Y; 
