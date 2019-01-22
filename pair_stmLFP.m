@@ -43,7 +43,7 @@ if ex0.exp.StimPerTrial == 4
 elseif ex0.exp.StimPerTrial == 1
     para.window = {[0.8 2]};
     stmdur = 2;
-    para.wnd = 0.5; % was 0.3
+    para.wnd = 0.1; % was 0.3
 end
 
 % LFP & spikes as a function of stimulus
