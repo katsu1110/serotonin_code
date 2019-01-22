@@ -280,44 +280,6 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'eye
     end    
 end
 
-
-% Spike-triggered LFP =====================
-if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'sta'))
-    for d = 1:2
-        for i = 1:lenv
-            sta = [];
-            for n = 1:para.cond(d).ntr(i)
-                % compute a standard STA
-                stlfp = getSTA(para.cond(d).trials{i}(n).(lfpfield), ...
-                    para.cond(d).trials{i}(n).LFP_prepro_time, ...
-                    para.cond(d).spk{j, i}{n}, para.wnd, fs);            
-                if ~isnan(stlfp)
-                    sta = [sta; stlfp];
-                end
-            end
-            if ~isempty(sta)
-                % STA as a function of stimulus type
-                para.cond(d).sta.mean(i,:) = nanmean(sta, 1);
-                para.cond(d).sta.sd(i,:) = nanstd(sta, [], 1);
-                para.cond(d).sta.nspk(i) = size(sta, 1);
-
-                % STA spectrogram
-                [para.cond(d).sta.s{i}, para.cond(d).sta.f{i}, para.cond(d).sta.t{i}, para.cond(d).sta.p{i}] = ...
-                    spectrogram_frange(para.cond(d).sta.mean(i,:), 95, fs, [0 100]);
-            else
-                para.cond(d).sta.mean(i,:) = nan(1, length(-para.wnd:1/fs:para.wnd));
-                para.cond(d).sta.sd(i,:) = para.cond(d).sta.mean(i,:);
-                para.cond(d).sta.nspk(i) = 0;
-                para.cond(d).sta.s{i} = nan;
-                para.cond(d).sta.f{i} = nan;
-                para.cond(d).sta.t{i} = nan;
-                para.cond(d).sta.p{i} = nan;
-            end
-        end  
-    end     
-end
-
-
 % Spectrogram =============================
 if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'spectrogram'))
     for d = 1:2
@@ -337,6 +299,59 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'spe
         end   
     end
 end
+
+
+% Spike-triggered LFP =====================
+if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'sta'))
+    for d = 1:2
+        for i = 1:lenv
+            sta = [];
+            tfa = [];
+            for n = 1:para.cond(d).ntr(i)
+                % compute a standard STA
+                stlfp = getSTA(para.cond(d).trials{i}(n).(lfpfield), ...
+                    para.cond(d).trials{i}(n).LFP_prepro_time, ...
+                    para.cond(d).spk{j, i}{n}, para.wnd, fs);        
+                
+                % obtain corresponding spectrogram
+                sp = para.cond(d).trials{i}(n).energy;
+                sttfa = getSTTFA(sp, para.cond(d).trials{i}(n).LFP_prepro_time, ...
+                    para.cond(d).spk{j, i}{n}, para.wnd, fs);  
+                
+                if ~isnan(stlfp)
+                    % stack stLFP
+                    sta = [sta; stlfp];
+                    
+                    % spectrogram in each stLFP
+                    if isempty(tfa)
+                        tfa = nansum(sttfa, 3);
+                    else
+                        tfa = tfa + nansum(sttfa, 3);
+                    end     
+                end
+            end
+            if ~isempty(sta)
+                % STA as a function of stimulus type
+                para.cond(d).sta.mean(i,:) = nanmean(sta, 1);
+                para.cond(d).sta.sd(i,:) = nanstd(sta, [], 1);
+                para.cond(d).sta.nspk(i) = size(sta, 1);
+
+                % mean STA spectrogram
+                para.cond(d).sta.t{i} = linspace(-para.wnd, para.wnd, length(para.cond(d).sta.mean(1,:)));
+                para.cond(d).sta.f{i} = para.cond(d).spectrogram.f{i};
+                para.cond(d).sta.p{i} = tfa./para.cond(d).sta.nspk(i);
+            else
+                para.cond(d).sta.mean(i,:) = nan(1, length(-para.wnd:1/fs:para.wnd));
+                para.cond(d).sta.sd(i,:) = para.cond(d).sta.mean(i,:);
+                para.cond(d).sta.nspk(i) = 0;
+                para.cond(d).sta.f{i} = nan;
+                para.cond(d).sta.t{i} = nan;
+                para.cond(d).sta.p{i} = nan;
+            end
+        end  
+    end     
+end
+
 
 % Spike-LFP coherency ========================
 if ismember(1, contains(analysis, 'all')) || sum(contains(analysis, 'coherence'))
