@@ -43,7 +43,7 @@ if ex0.exp.StimPerTrial == 4
 elseif ex0.exp.StimPerTrial == 1
     para.window = {[0.8 2]};
     stmdur = 2;
-    para.wnd = 0.5; % was 0.3
+    para.wnd = 0.1; % was 0.3
 end
 
 % LFP & spikes as a function of stimulus
@@ -309,7 +309,7 @@ if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'sta
             tfa = [];
             for n = 1:para.cond(d).ntr(i)
                 % compute a standard STA
-                stlfp = getSTA(para.cond(d).trials{i}(n).(lfpfield), ...
+                stlfp = getSTA4mp(para.cond(d).trials{i}(n).(lfpfield), ...
                     para.cond(d).trials{i}(n).LFP_prepro_time, ...
                     para.cond(d).spk{j, i}{n}, para.wnd, fs);        
                 

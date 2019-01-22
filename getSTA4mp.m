@@ -1,4 +1,4 @@
-function stlfp = getSTA(lfptrace, lfptime, spktime, wnd, fs)
+function stlfp = getSTA4mp(lfptrace, lfptime, spktime, wnd, fs)
 %%
 % generic function to get spike-triggered averaging LFP
 % note that the input 'lfptrace' must be a 0-mean vector
@@ -11,7 +11,7 @@ end
 
 % 0-mean vector
 % lfptrace = lfptrace - mean(lfptrace(lfptime >= spktime(1) & lfptime <= spktime(end)));
-lfptrace = lfptrace - nanmean(lfptrace);
+% lfptrace = lfptrace - nanmean(lfptrace);
 
 % initialization
 nspk = length(spktime);
@@ -38,6 +38,6 @@ for i = 1:nspk
     else
         seg = lfptrace(tstrt:tend);
     end
-    stlfp(i, :) = seg;
+    stlfp(i, :) = seg - nanmean(seg);
 end
 stlfp(any(isnan(stlfp), 2), :) = [];
