@@ -81,7 +81,7 @@ end
 
 fprintf('Fitting CBEM with single linear conductance...\n');
 [CBEM_lin] = fitCBEMwithLinearTransferFR(CBEM,SpikeStim,spkHist,Y);
-[~,~,CBEMlin_nll]      = fitCBEMwithLinearTransferFR(CBEM_lin,SpikeStim,spkHist,Y,true);
+% [~,~,CBEMlin_nll]      = fitCBEMwithLinearTransferFR(CBEM_lin,SpikeStim,spkHist,Y,true);
 
 addOnesColumnToStim = true; %if true, function adds on a column of 1's to the end of SpikeStim
 
@@ -148,5 +148,6 @@ if figon
 end
 
 %% Simulating from model fit
+CBEM_fit.orig.stm = X; CBEM_fit.orig.spk = Y; 
 [CBEM_fit.sim.Mtsp,CBEM_fit.sim.spks,CBEM_fit.sim.V_fit,CBEM_fit.sim.g_s_fit, CBEM_fit.sim.l_s_fit] = ...
-    simulateCBEM(CBEM_fit,SpikeStim,10);
+    simulateCBEM(CBEM_fit,SpikeStim,1);
