@@ -140,15 +140,15 @@ if filt
     d = designfilt('bandstopiir','FilterOrder',notchord, ...
                    'HalfPowerFrequency1', notchf(1),'HalfPowerFrequency2', notchf(2), ...
                    'DesignMethod','butter','SampleRate',Fs);
-    lfps = filter(d, lfps);
+    lfps = filtfilt(d, lfps);
 
     % define bandpass filter for LFPs (Nauhaus et al., 2009)
     [b_high, a_high] = butter(bpord(1), bpf(1)/(Fs/2), 'high');
     [b_low, a_low] = butter(bpord(2), bpf(2)/(Fs/2), 'low');
 
     % LFP =======================
-    lfps = filter(b_high, a_high, lfps);
-    lfps = filter(b_low, a_low, lfps);
+    lfps = filtfilt(b_high, a_high, lfps);
+    lfps = filtfilt(b_low, a_low, lfps);
 end
 
 % filter pupil======================
