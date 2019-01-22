@@ -11,7 +11,7 @@ end
 
 % 0-mean vector
 % lfptrace = lfptrace - mean(lfptrace(lfptime >= spktime(1) & lfptime <= spktime(end)));
-lfptrace = lfptrace - nanmean(lfptrace);
+lfptrace = lfptrace - mean(lfptrace(lfptime >= spktime(1)-wnd & lfptime <= spktime(end)+wnd));
 
 % initialization
 nspk = length(spktime);
