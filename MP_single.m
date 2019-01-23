@@ -60,7 +60,7 @@ gaborInfo = getGaborData(folderName, filename, 1);
 parfor k = 1:ntr
     % 50 Hz line noise and >100 Hz are removed
     cf = gaborInfo{k}.gaborData(2, :); % atom frequency
-    atomList = find(cf < 50 | (cf > 50 & cf < 100));    
+    atomList = find((cf > 0 & cf < 49.5) | (cf > 50.5 & cf < 90));    
     
     % signal
     mp_signal = reconstructSignalFromAtomsMPP(...
