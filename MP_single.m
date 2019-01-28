@@ -13,7 +13,7 @@ function MP_single(ex, internal, filename)
 % preset parameters
 Fs = 1000; % sampling frequency
 folderName = '../Data/MPprepro_RC/';
-max_iter = 100;
+max_iter = 500;
 wrap = 1; % if 1, it does not work...
 L = 4096; % 2^N
 if (2/ex.exp.StimPerTrial + 0.2)*Fs < 1024
@@ -60,7 +60,7 @@ gaborInfo = getGaborData(folderName, filename, 1);
 parfor k = 1:ntr
     % 50 Hz line noise and >100 Hz are removed
     cf = gaborInfo{k}.gaborData(2, :); % atom frequency
-    atomList = find((cf > 0 & cf < 49.5) | (cf > 50.5 & cf < 90));    
+    atomList = find((cf > 0 & cf < 49.5) | (cf > 50.5 & cf < 150));    
     
     % signal
     mp_signal = reconstructSignalFromAtomsMPP(...

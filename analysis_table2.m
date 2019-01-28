@@ -204,7 +204,7 @@ for i = 1:lenses
 %         reft = sta_t(sta_t < maxt);
 %         zerotb = reft(zerotb);
         zerotb = sta_analysis_time(zerotb);
-%         at(i, 30, s) = abs(ampb);
+%         at(i, 4, s) = abs(minv);
         at(i, 4, s) = maxv - minv;
         % sta amp drug
         [maxv, maxt] = max(datast{i}.cond(2).sta.mean(stmidx(i, s), sta_analysiswnd));
