@@ -12,13 +12,16 @@ ref:
 import glob
 import scipy.io as sio
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+import csv
 
-import keras
+#import matplotlib.pyplot as plt
+#import seaborn as sns
+
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.layers import Conv1D, MaxPooling1D, GlobalAveragePooling1D
+from sklearn.model_selection import LeaveOneOut
+from sklearn.metrics import roc_curve, auc
 
 # datapath ===========================================
 l = glob.glob(r'Z:/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/*/')
@@ -42,18 +45,15 @@ def oned_convnet(n_time):
 
 
 # fit and evaluate ======================
-callbacks_list = [
-    keras.callbacks.ModelCheckpoint(
-        filepath='best_model.{epoch:02d}-{val_loss:.2f}.h5',
-        monitor='val_loss', save_best_only=True),
-    keras.callbacks.EarlyStopping(monitor='acc', patience=1)
-]
-BATCH_SIZE = 400
-EPOCHS = 50
+BATCH_SIZE = 32
+EPOCHS = 100
 model = oned_convnet(141)
-l = l[-2:]
-print(l)
+loo = LeaveOneOut()
+mscores = dict(fname=[], acc0=[], acc1=[], roc0=[], roc1=[])
 for c, fname in enumerate(l):
+    # session
+    mscores['fname'].append(l[c][-8:-1]) 
+    
     # load data
     stlfp0 = sio.loadmat(l[c] + 'stlfp0.mat')
     stlfp1 = sio.loadmat(l[c] + 'stlfp1.mat')
@@ -63,15 +63,36 @@ for c, fname in enumerate(l):
         # format data
         X = np.vstack((stlfp0['stlfp0'][0][d], stlfp1['stlfp1'][0][d]))
         X = np.expand_dims(X, axis=2)
-        print(np.shape(X))
         len0 = np.shape(stlfp0['stlfp0'][0][d])[0]
         len1 = np.shape(stlfp1['stlfp1'][0][d])[0]
         y = np.concatenate((np.zeros(len0, dtype=int), np.ones(len1, dtype=int)))
+        ypredc = np.zeros(len(y))
+        ypredp = np.zeros(len(y))
         
-        # fit the model
-        history = model.fit(X, y,
-                          batch_size=BATCH_SIZE,
-                          epochs=EPOCHS,
-                          callbacks=callbacks_list,
-                          validation_split=0.2,
-                          verbose=1)
+        # fit the model with leave-one-out
+        for train_idx, test_idx in loo.split(X):
+            # train and test datasets
+            X_train, X_test = X[train_idx], X[test_idx]
+            y_train, y_test = y[train_idx], y[test_idx]
+            
+            # model fitting
+            model.fit(X_train, y_train,
+                  batch_size=BATCH_SIZE,
+                  epochs=EPOCHS,
+                  verbose=1)
+            
+            # prediction
+            ypredc[test_idx] = model.predict_classes(X_test).ravel()
+            ypredp[test_idx] = model.predict(X_test).ravel()
+            
+        # model scores
+        mscores['acc' + str(d)].append(np.sum(y==ypredc)/len(y))
+        fpr, tpr = roc_curve(y, ypredp)
+        mscores['roc' + str(d)].append(auc(fpr, tpr))
+            
+# save matrices 
+keys = sorted(mscores.keys())
+with open("Z:/Katsuhisa/serotonin_project/LFP_project/Data/c2s/mscores.csv", "w") as outfile:
+   writer = csv.writer(outfile, delimiter = ",")
+   writer.writerow(keys)
+   writer.writerows(zip(*[mscores[key] for key in keys]))
