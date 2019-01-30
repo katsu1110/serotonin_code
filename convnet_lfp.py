@@ -26,7 +26,7 @@ l = glob.glob(r'Z:/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/*/')
 # 1D CNN model ===============================================
 def oned_convnet(n_time):
     model = Sequential()
-    model.add(Conv1D(64, 3, activation='relu', input_shape=(n_time, )))
+    model.add(Conv1D(64, 3, activation='relu', input_shape=(n_time, 1)))
     model.add(Conv1D(64, 3, activation='relu'))
     model.add(MaxPooling1D(3))
     model.add(Conv1D(128, 3, activation='relu'))
@@ -51,6 +51,8 @@ callbacks_list = [
 BATCH_SIZE = 400
 EPOCHS = 50
 model = oned_convnet(141)
+l = l[-2:]
+print(l)
 for c, fname in enumerate(l):
     # load data
     stlfp0 = sio.loadmat(l[c] + 'stlfp0.mat')
@@ -60,11 +62,14 @@ for c, fname in enumerate(l):
     for d in np.arange(2):
         # format data
         X = np.vstack((stlfp0['stlfp0'][0][d], stlfp1['stlfp1'][0][d]))
+        X = np.expand_dims(X, axis=2)
+        print(np.shape(X))
         len0 = np.shape(stlfp0['stlfp0'][0][d])[0]
         len1 = np.shape(stlfp1['stlfp1'][0][d])[0]
-        y = np.vstack((np.zeros(len0), np.ones(len1)))
+        y = np.concatenate((np.zeros(len0, dtype=int), np.ones(len1, dtype=int)))
         
-    history = model.fit(x_train, y_train,
+        # fit the model
+        history = model.fit(X, y,
                           batch_size=BATCH_SIZE,
                           epochs=EPOCHS,
                           callbacks=callbacks_list,
