@@ -512,30 +512,30 @@ end
 % basic LFP analysis =========================
 if sum(strcmp(type, 'all')) || sum(strcmp(type,  'c2sFormat'))
     % stimulus types
-    stmtypes = {'rc', 'or', 'co', 'sf', 'sz'};
+%     stmtypes = {'rc', 'or', 'co', 'sf', 'sz'};
    
     % load data and lists
     loadpath = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/LFPprepro/'];
     a = load([loadpath 'lfplist.mat'], 'lfplist');  
-    b = load([mypath '/Corinna/SharedCode/Katsu/list_RC.mat'], 'list_RC'); 
-    c = load([mypath '/Corinna/SharedCode/Katsu/incl_i_all_stim_cond_2007.mat'], 'incl_i'); 
-    incl_i = c.incl_i;
-    list_RC = b.list_RC;
+%     b = load([mypath '/Corinna/SharedCode/Katsu/list_RC.mat'], 'list_RC'); 
+%     c = load([mypath '/Corinna/SharedCode/Katsu/incl_i_all_stim_cond_2007.mat'], 'incl_i'); 
+%     incl_i = c.incl_i;
+%     list_RC = b.list_RC;
     lfplist = a.lfplist;
     N = length(lfplist);
     
     % initialization
-    Out1 = cell(1, N); Out2 = cell(1, N); Out3 = cell(1, N); 
-    goodunit = zeros(1, N); is5ht = zeros(1, N);
-    stmtype = zeros(1, N); animal = zeros(1, N); 
+%     Out1 = cell(1, N); Out2 = cell(1, N); Out3 = cell(1, N); 
+%     goodunit = zeros(1, N); is5ht = zeros(1, N);
+%     stmtype = zeros(1, N); animal = zeros(1, N); 
     parfor i = 1:N            
         % goodunit
         if isempty(strfind(lfplist{i}{1}, 'xRC'))
             continue
 %             goodunit(i) = ismember(i, incl_i);
-        else
-            goodunit(i) = ismember(i, list_RC);
-            stmtype(i) = 1;
+%         else
+%             goodunit(i) = ismember(i, list_RC);
+%             stmtype(i) = 1;
         end
         try
             % load =======================
@@ -543,60 +543,72 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'c2sFormat'))
             d2 = load([loadpath lfplist{i}{2}], 'ex');
             
             % analysis
-            [~, Out1{i}, Out2{i}, Out3{i}] = data4c2s(d0.ex, d2.ex, 'LFP_prepro', 1, 1);
+            [~, stlfp0, stlfp1, data] = data4c2s(d0.ex, d2.ex, 'LFP_prepro', 1, 1);
             
-            % stimlus type
-            if stmtype(i) == 0
-                stmtype(i) = find(strcmp(stmtypes, d0.ex.exp.e1.type));
+            % resample stlfp0 to match the dimension of stlfp1
+            rng(19891220);
+            for d = 1:2
+                cur_dim = size(stlfp0{d}, 1);
+                targ_dim = size(stlfp1{d}, 1);
+                stlfp0{d} = stlfp0{d}(datasample(1:cur_dim, targ_dim, 'Replace', false), :);
             end
+            
+            % save
+            us = strfind(lfplist{i}{1}, '_');
+            c2s_saver(stlfp0, stlfp1, data, lfplist{i}{1}(1:us(2)-1), mypath)
+            
+%             % stimlus type
+%             if stmtype(i) == 0
+%                 stmtype(i) = find(strcmp(stmtypes, d0.ex.exp.e1.type));
+%             end
+% 
+%             % is mango
+%             animal(i) = strcmp(lfplist{i}{1}(1:2), 'ma');
+% 
+%             % is 5HT
+%             is5ht(i) = ismember(1, contains(lfplist{i}{2}, '5HT'));
 
-            % is mango
-            animal(i) = strcmp(lfplist{i}{1}(1:2), 'ma');
-
-            % is 5HT
-            is5ht(i) = ismember(1, contains(lfplist{i}{2}, '5HT'));
-
-            disp(['session ' num2str(i) ' analyzed!'])
+            disp(['session ' num2str(i) ' saved!'])
         catch
             disp(['session ' num2str(i) ' error'])
         end
     end
-    % unit info
-    oks = ~cellfun('isempty', Out1);
-    Lfps_all.lfplist = lfplist(oks);
-    Lfps_all.stmtype = stmtype(oks);
-    Lfps_all.animal = animal(oks);
-    Lfps_all.is5ht = is5ht(oks);
-    Lfps_all.goodunit = goodunit(oks);
-
-    % results from analysis    
-    stlfp0all = Out1(oks); 
-    stlfp1all = Out2(oks); 
-    Lfps_all.data = Out3(oks); 
-    
-    % split by stimulus type
-    fields = {'lfplist', 'stmtype', 'animal', 'is5ht', 'goodunit'};
-    for s = 1:length(stmtypes)
-        idx = Lfps_all.stmtype == s;
-        
-        if s > 1
-            continue
-        end
-        
-        for f = 1:length(fields)
-            c2sData.(fields{f}) = Lfps_all.(fields{f})(idx);
-        end
-        
-        stlfp0 = stlfp0all(idx);
-        stlfp1 = stlfp1all(idx);
-        c2sData.data = Lfps_all.data(idx);
-        
-        % autosave
-        save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/c2sData_' stmtypes{s} '.mat'], 'c2sData', '-v7.3')
-        save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/stlfp0_' stmtypes{s} '.mat'], 'stlfp0', '-v7.3')
-        save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/stlfp1_' stmtypes{s} '.mat'], 'stlfp1', '-v7.3')
-        disp([stmtypes{s} ': c2sData saved!'])
-    end
+%     % unit info
+%     oks = ~cellfun('isempty', Out1);
+%     Lfps_all.lfplist = lfplist(oks);
+%     Lfps_all.stmtype = stmtype(oks);
+%     Lfps_all.animal = animal(oks);
+%     Lfps_all.is5ht = is5ht(oks);
+%     Lfps_all.goodunit = goodunit(oks);
+% 
+%     % results from analysis    
+%     stlfp0all = Out1(oks); 
+%     stlfp1all = Out2(oks); 
+%     Lfps_all.data = Out3(oks); 
+%     
+%     % split by stimulus type
+%     fields = {'lfplist', 'stmtype', 'animal', 'is5ht', 'goodunit'};
+%     for s = 1:length(stmtypes)
+%         idx = Lfps_all.stmtype == s;
+%         
+%         if s > 1
+%             continue
+%         end
+%         
+%         for f = 1:length(fields)
+%             c2sData.(fields{f}) = Lfps_all.(fields{f})(idx);
+%         end
+%         
+%         stlfp0 = stlfp0all(idx);
+%         stlfp1 = stlfp1all(idx);
+%         c2sData.data = Lfps_all.data(idx);
+%         
+%         % autosave
+%         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/c2sData_' stmtypes{s} '.mat'], 'c2sData', '-v7.3')
+%         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/stlfp0_' stmtypes{s} '.mat'], 'stlfp0', '-v7.3')
+%         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/stlfp1_' stmtypes{s} '.mat'], 'stlfp1', '-v7.3')
+%         disp([stmtypes{s} ': c2sData saved!'])
+%     end
 end
 
 
@@ -2571,3 +2583,9 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'CBEM'))
         disp([stmtypes{s} ': cbem saved!'])
     end
 end
+
+function c2s_saver(stlfp0, stlfp1, data, fname, mypath)
+mkdir([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/' fname])
+save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/' fname '/stlfp0.mat'], 'stlfp0')
+save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/' fname '/stlfp1.mat'], 'stlfp1')
+save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/' fname '/data.mat'], 'data')

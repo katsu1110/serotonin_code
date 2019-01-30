@@ -3,52 +3,54 @@
 Created on Wed Jan 30 14:07:15 2019
 
 spike prediction from LFP by a simple 1D CNN
+ref:
+'https://blog.goodaudience.com/introduction-to-1d-convolutional-neural-networks-in-keras-for-time-sequences-3a7ff801a2cf'
 
 @author: katsuhisa
 """
-
-# load mat file ===========================================
+# libraries ====================
 import scipy.io as sio
 import h5py
+import numpy as np
+import keras
+from keras.models import Sequential
+from keras.layers import Dense, Dropout
+from keras.layers import Conv1D, MaxPooling1D, GlobalAveragePooling1D
 
-mat_contents = h5py.File('Z:/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/c2sData_rc.mat')
 
-# generate datasets =====================
-stlfp1 = np.random.random((1000, 101))
-stlfp0 = np.random.random((1000, 101))
+# load mat file ===========================================
+stlfp0 = sio.loadmat('Z:/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/stlfp0_rc.mat')
+stlfp1 = sio.loadmat('Z:/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/stlfp1_rc.mat')
 
-X = np.vstack((stlfp1, stlfp0))
-y = np.vstack((np.ones((1000,), dtype=int), np.zeros((1000,), dtype=int))
+n_time = np.shape(stlfp1)[1]
 
 # 1D CNN model ===============================================
-model_m = Sequential()
-model_m.add(Reshape((TIME_PERIODS, num_sensors), input_shape=(input_shape,)))
-model_m.add(Conv1D(100, 10, activation='relu', input_shape=(TIME_PERIODS, num_sensors)))
-model_m.add(Conv1D(100, 10, activation='relu'))
-model_m.add(MaxPooling1D(3))
-model_m.add(Conv1D(160, 10, activation='relu'))
-model_m.add(Conv1D(160, 10, activation='relu'))
-model_m.add(GlobalAveragePooling1D())
-model_m.add(Dropout(0.5))
-model_m.add(Dense(num_classes, activation='softmax'))
-print(model_m.summary())
+def oned_convnet(n_time):
+    model = Sequential()
+    model.add(Conv1D(64, 3, activation='relu', input_shape=(n_time, )))
+    model.add(Conv1D(64, 3, activation='relu'))
+    model.add(MaxPooling1D(3))
+    model.add(Conv1D(128, 3, activation='relu'))
+    model.add(Conv1D(128, 3, activation='relu'))
+    model.add(GlobalAveragePooling1D())
+    model.add(Dropout(0.5))
+    model.add(Dense(1, activation='sigmoid'))
+    
+    model.compile(loss='binary_crossentropy',
+                optimizer='rmsprop', metrics=['accuracy'])
+    return model
+#    print(model_m.summary())
 
-# cross-validation (leave-one-out) ======================
+# fit and evaluate ======================
 callbacks_list = [
     keras.callbacks.ModelCheckpoint(
         filepath='best_model.{epoch:02d}-{val_loss:.2f}.h5',
         monitor='val_loss', save_best_only=True),
     keras.callbacks.EarlyStopping(monitor='acc', patience=1)
 ]
-
-model_m.compile(loss='binary_crossentropy',
-                optimizer='rmsprop', metrics=['accuracy'])
-
 BATCH_SIZE = 400
 EPOCHS = 50
-
-history = model_m.fit(x_train,
-                      y_train,
+history = model.fit(x_train, y_train,
                       batch_size=BATCH_SIZE,
                       epochs=EPOCHS,
                       callbacks=callbacks_list,
