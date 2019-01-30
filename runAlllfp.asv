@@ -571,7 +571,7 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'c2sFormat'))
 
     % results from analysis    
     stlfp0all = Out1(oks); 
-    stlfp1all = Out2(oks); 
+    stlfp1 = Out2(oks); 
     Lfps_all.data = Out3(oks); 
     
     % split by stimulus type
@@ -587,14 +587,12 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'c2sFormat'))
             c2sData.(fields{f}) = Lfps_all.(fields{f})(idx);
         end
         
-        stlfp0 = stlfp0all(idx);
-        stlfp1 = stlfp1all(idx);
+        c2sData.stlfp0 = Lfps_all.stlfp0(idx);
+        c2sData.stlfp1 = Lfps_all.stlfp1(idx);
         c2sData.data = Lfps_all.data(idx);
         
         % autosave
         save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/c2sData_' stmtypes{s} '.mat'], 'c2sData', '-v7.3')
-        save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/stlfp0_' stmtypes{s} '.mat'], 'stlfp0', '-v7.3')
-        save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/stlfp1_' stmtypes{s} '.mat'], 'stlfp1', '-v7.3')
         disp([stmtypes{s} ': c2sData saved!'])
     end
 end

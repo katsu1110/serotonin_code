@@ -2,16 +2,16 @@
 """
 Created on Wed Jan 30 14:07:15 2019
 
+spike prediction from LFP by a simple 1D CNN
+
 @author: katsuhisa
 """
 
-# spike prediction from LFP by a simple 1D CNN
-
-
 # load mat file ===========================================
 import scipy.io as sio
+import h5py
 
-mat_contents = sio.loadmat('filepath')
+mat_contents = h5py.File('Z:/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/c2sData_rc.mat')
 
 # generate datasets =====================
 stlfp1 = np.random.random((1000, 101))
