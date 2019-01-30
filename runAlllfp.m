@@ -510,6 +510,95 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'spike_count'))
 end
 
 % basic LFP analysis =========================
+if sum(strcmp(type, 'all')) || sum(strcmp(type,  'c2sFormat'))
+    % stimulus types
+    stmtypes = {'rc', 'or', 'co', 'sf', 'sz'};
+   
+    % load data and lists
+    loadpath = [mypath '/Katsuhisa/serotonin_project/LFP_project/Data/LFPprepro/'];
+    a = load([loadpath 'lfplist.mat'], 'lfplist');  
+    b = load([mypath '/Corinna/SharedCode/Katsu/list_RC.mat'], 'list_RC'); 
+    c = load([mypath '/Corinna/SharedCode/Katsu/incl_i_all_stim_cond_2007.mat'], 'incl_i'); 
+    incl_i = c.incl_i;
+    list_RC = b.list_RC;
+    lfplist = a.lfplist;
+    N = length(lfplist);
+    
+    % initialization
+    Out1 = cell(1, N); Out2 = cell(1, N); Out3 = cell(1, N); 
+    goodunit = zeros(1, N); is5ht = zeros(1, N);
+    stmtype = zeros(1, N); animal = zeros(1, N); 
+    parfor i = 1:N            
+        % goodunit
+        if isempty(strfind(lfplist{i}{1}, 'xRC'))
+            continue
+%             goodunit(i) = ismember(i, incl_i);
+        else
+            goodunit(i) = ismember(i, list_RC);
+            stmtype(i) = 1;
+        end
+        try
+            % load =======================
+            d0 = load([loadpath lfplist{i}{1}], 'ex');
+            d2 = load([loadpath lfplist{i}{2}], 'ex');
+            
+            % analysis
+            [~, Out1{i}, Out2{i}, Out3{i}] = data4c2s(d0.ex, d2.ex, 'LFP_prepro', 1, 1);
+            
+            % stimlus type
+            if stmtype(i) == 0
+                stmtype(i) = find(strcmp(stmtypes, d0.ex.exp.e1.type));
+            end
+
+            % is mango
+            animal(i) = strcmp(lfplist{i}{1}(1:2), 'ma');
+
+            % is 5HT
+            is5ht(i) = ismember(1, contains(lfplist{i}{2}, '5HT'));
+
+            disp(['session ' num2str(i) ' analyzed!'])
+        catch
+            disp(['session ' num2str(i) ' error'])
+        end
+    end
+    % unit info
+    oks = ~cellfun('isempty', Out1);
+    Lfps_all.lfplist = lfplist(oks);
+    Lfps_all.stmtype = stmtype(oks);
+    Lfps_all.animal = animal(oks);
+    Lfps_all.is5ht = is5ht(oks);
+    Lfps_all.goodunit = goodunit(oks);
+
+    % results from analysis    
+    Lfps_all.stlfp0 = Out1(oks); 
+    Lfps_all.stlfp1 = Out2(oks); 
+    Lfps_all.data = Out3(oks); 
+    
+    % split by stimulus type
+    fields = {'lfplist', 'stmtype', 'animal', 'is5ht', 'goodunit'};
+    for s = 1:length(stmtypes)
+        idx = Lfps_all.stmtype == s;
+        
+        if s > 1
+            continue
+        end
+        
+        for f = 1:length(fields)
+            c2sData.(fields{f}) = Lfps_all.(fields{f})(idx);
+        end
+        
+        c2sData.stlfp0 = Lfps_all.stlfp0(idx);
+        c2sData.stlfp1 = Lfps_all.stlfp1(idx);
+        c2sData.data = Lfps_all.data(idx);
+        
+        % autosave
+        save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/c2sData_' stmtypes{s} '.mat'], 'c2sData', '-v7.3')
+        disp([stmtypes{s} ': c2sData saved!'])
+    end
+end
+
+
+% basic LFP analysis =========================
 if sum(strcmp(type, 'all')) || sum(strcmp(type,  'lfps_pair'))
     % stimulus types
     stmtypes = {'rc', 'or', 'co', 'sf', 'sz'};
