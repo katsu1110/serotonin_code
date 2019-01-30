@@ -9,20 +9,19 @@ ref:
 @author: katsuhisa
 """
 # libraries ====================
+import glob
 import scipy.io as sio
-import h5py
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
 import keras
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.layers import Conv1D, MaxPooling1D, GlobalAveragePooling1D
 
-
-# load mat file ===========================================
-stlfp0 = sio.loadmat('Z:/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/stlfp0_rc.mat')
-stlfp1 = sio.loadmat('Z:/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/stlfp1_rc.mat')
-
-n_time = np.shape(stlfp1)[1]
+# datapath ===========================================
+l = glob.glob(r'Z:/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/*/')
 
 # 1D CNN model ===============================================
 def oned_convnet(n_time):
@@ -35,11 +34,12 @@ def oned_convnet(n_time):
     model.add(GlobalAveragePooling1D())
     model.add(Dropout(0.5))
     model.add(Dense(1, activation='sigmoid'))
+#    print(model_m.summary())
     
     model.compile(loss='binary_crossentropy',
                 optimizer='rmsprop', metrics=['accuracy'])
     return model
-#    print(model_m.summary())
+
 
 # fit and evaluate ======================
 callbacks_list = [
@@ -50,9 +50,23 @@ callbacks_list = [
 ]
 BATCH_SIZE = 400
 EPOCHS = 50
-history = model.fit(x_train, y_train,
-                      batch_size=BATCH_SIZE,
-                      epochs=EPOCHS,
-                      callbacks=callbacks_list,
-                      validation_split=0.2,
-                      verbose=1)
+model = oned_convnet(141)
+for c, fname in enumerate(l):
+    # load data
+    stlfp0 = sio.loadmat(l[c] + 'stlfp0.mat')
+    stlfp1 = sio.loadmat(l[c] + 'stlfp1.mat')
+    
+    # baseline or drug
+    for d in np.arange(2):
+        # format data
+        X = np.vstack((stlfp0['stlfp0'][0][d], stlfp1['stlfp1'][0][d]))
+        len0 = np.shape(stlfp0['stlfp0'][0][d])[0]
+        len1 = np.shape(stlfp1['stlfp1'][0][d])[0]
+        y = np.vstack((np.zeros(len0), np.ones(len1)))
+        
+    history = model.fit(x_train, y_train,
+                          batch_size=BATCH_SIZE,
+                          epochs=EPOCHS,
+                          callbacks=callbacks_list,
+                          validation_split=0.2,
+                          verbose=1)
