@@ -180,7 +180,7 @@ for d = 1:2
     for i = 1:lenv 
         for n = 1:para.cond(d).ntr(i)
             % spike times (ms)
-            spkt = 1000*(para.cond(d).spk{3, i}{n} - para.window{1}(1)) + trt;
+            spkt = 1000*(para.cond(d).spk{j, i}{n} - para.window{1}(1)) + trt;
             data{d}.spike_times = [data{d}.spike_times, spkt'];
             trt = trt + 1000*(para.window{1}(2) - para.window{1}(1));
 

@@ -551,10 +551,6 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'c2sFormat'))
             for d = 1:2
                 cur_dim = size(stlfp0{d}, 1);
                 stlfp0{d} = stlfp0{d}(datasample(1:cur_dim, targ_dim, 'Replace', false), :);
-                cur_dim = size(stlfp1{d}, 1);
-                if cur_dim > targ_dim
-                    stlfp1{d} = stlfp1{d}(datasample(1:cur_dim, targ_dim, 'Replace', false), :);
-                end
             end
             
             % save
