@@ -88,6 +88,7 @@ def fit_session(i):
         auc_ses[d] = auc(fpr, tpr)
     
     # outputs
+    print('session ' + str(i) + ' processed!')
     return [l[i][-8:-1], acc_ses[0], acc_ses[1], auc_ses[0], auc_ses[1]]
         
 pool = multiprocessing.Pool(multiprocessing.cpu_count())
