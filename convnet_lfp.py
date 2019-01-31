@@ -13,6 +13,8 @@ import glob
 import scipy.io as sio
 import numpy as np
 import csv
+from joblib import Parallel, delayed
+import multiprocessing
 
 #import matplotlib.pyplot as plt
 #import seaborn as sns
@@ -44,21 +46,15 @@ def oned_convnet(n_time):
     return model
 
 
-# fit and evaluate ======================
-BATCH_SIZE = 32
-EPOCHS = 100
-model = oned_convnet(141)
-loo = LeaveOneOut()
-mscores = dict(fname=[], acc0=[], acc1=[], roc0=[], roc1=[])
-for c, fname in enumerate(l):
-    # session
-    mscores['fname'].append(l[c][-8:-1]) 
-    
+# fit and evaluate =====================
+def fit_session(i, l, model, cv):    
     # load data
-    stlfp0 = sio.loadmat(l[c] + 'stlfp0.mat')
-    stlfp1 = sio.loadmat(l[c] + 'stlfp1.mat')
+    stlfp0 = sio.loadmat(l[i] + 'stlfp0.mat')
+    stlfp1 = sio.loadmat(l[i] + 'stlfp1.mat')
     
     # baseline or drug
+    acc_ses = [0]*2
+    auc_ses = [0]*2
     for d in np.arange(2):
         # format data
         X = np.vstack((stlfp0['stlfp0'][0][d], stlfp1['stlfp1'][0][d]))
@@ -70,15 +66,15 @@ for c, fname in enumerate(l):
         ypredp = np.zeros(len(y))
         
         # fit the model with leave-one-out
-        for train_idx, test_idx in loo.split(X):
+        for train_idx, test_idx in cv.split(X):
             # train and test datasets
             X_train, X_test = X[train_idx], X[test_idx]
             y_train, y_test = y[train_idx], y[test_idx]
             
             # model fitting
             model.fit(X_train, y_train,
-                  batch_size=BATCH_SIZE,
-                  epochs=EPOCHS,
+                  batch_size=32,
+                  epochs=50,
                   verbose=1)
             
             # prediction
@@ -86,13 +82,19 @@ for c, fname in enumerate(l):
             ypredp[test_idx] = model.predict(X_test).ravel()
             
         # model scores
-        mscores['acc' + str(d)].append(np.sum(y==ypredc)/len(y))
+        acc_ses[d] = np.sum(y==ypredc)/len(y)
         fpr, tpr = roc_curve(y, ypredp)
-        mscores['roc' + str(d)].append(auc(fpr, tpr))
+        auc_ses[d] = auc(fpr, tpr)
+    
+    # outputs
+    return [l[i][-8:-1], acc_ses[0], acc_ses[1], auc_ses[0], auc_ses[1]]
+        
+model = oned_convnet(141)
+loo = LeaveOneOut()
+num_cores = multiprocessing.cpu_count()
+results = Parallel(n_jobs=num_cores)(delayed(fit_session)(i, l, model, loo) for i in np.arange(l))   
             
 # save matrices 
-keys = sorted(mscores.keys())
-with open("Z:/Katsuhisa/serotonin_project/LFP_project/Data/c2s/mscores.csv", "w") as outfile:
-   writer = csv.writer(outfile, delimiter = ",")
-   writer.writerow(keys)
-   writer.writerows(zip(*[mscores[key] for key in keys]))
+with open("Z:/Katsuhisa/serotonin_project/LFP_project/Data/c2s/results.csv", "w") as outfile:
+   writer = csv.writer(outfile, quoting=csv.QUOTE_ALL)
+   writer.writerows(results)
