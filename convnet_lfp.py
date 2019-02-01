@@ -9,6 +9,7 @@ ref:
 @author: katsuhisa
 """
 # libraries ====================
+import platform
 import glob
 import scipy.io as sio
 import numpy as np
@@ -25,7 +26,12 @@ from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_curve, auc
 
 # datapath ===========================================
-l = glob.glob(r'Z:/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/*/')
+if 'Win' in platform.system():
+    mypath = 'Z:'
+else:
+    mypath = '/gpfs01/nienborg/group'
+    
+l = glob.glob(mypath + '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/*/')
 
 # 1D CNN model ===============================================
 def oned_convnet(n_time):
@@ -46,8 +52,8 @@ def oned_convnet(n_time):
 
 # model performance metric ==============
 def modelperf(y, ypredc, ypredp):
-    fpr, tpr = roc_curve(y, ypredp)
-    return np.sum(y==ypredc)/len(y), auc(fpr, tpr)
+    j = roc_curve(y, ypredp, 1)
+    return np.sum(y==ypredc)/len(y), auc(j[0], j[1])
 
 # fit and evaluate =====================
 model = oned_convnet(141)
@@ -97,6 +103,6 @@ results = fit_session(0)
 #results = Parallel(n_jobs=num_cores)(delayed(fit_session)(i) for i in range(len(l)))   
             
 # save matrices 
-with open("Z:/Katsuhisa/serotonin_project/LFP_project/Data/c2s/results.csv", "w") as outfile:
+with open(mypath + "/Katsuhisa/serotonin_project/LFP_project/Data/c2s/results.csv", "w") as outfile:
    writer = csv.writer(outfile, quoting=csv.QUOTE_ALL)
    writer.writerows(results)
