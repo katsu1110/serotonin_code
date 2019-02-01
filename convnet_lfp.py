@@ -95,11 +95,17 @@ def fit_session(i):
     print(fname + ' processed!')
     mean_acc = np.mean(accuracy, axis=0)
     mean_auc = np.mean(auroc, axis=0)
-    return [fname, mean_acc[0], mean_acc[1], mean_auc[0], mean_auc[1]]
+    
+    # save
+    spath = mypath + '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/'
+    np.savetxt(spath + fname + 'cvscores.csv', np.concatenate((accuracy, auroc), axis=1), delimiter=',')
+    
+    return [fname, mean_acc[0].tolist(), mean_acc[1].tolist(), 
+            mean_auc[0].tolist(), mean_auc[1].tolist()]
         
-results = fit_session(0)
-#pool = multiprocessing.Pool(multiprocessing.cpu_count())
-#results = pool.map(fit_session, (i for i in range(len(l))))
+#results = fit_session(0)
+pool = multiprocessing.Pool(multiprocessing.cpu_count())
+results = pool.map(fit_session, (i for i in range(len(l))))
 #results = Parallel(n_jobs=num_cores)(delayed(fit_session)(i) for i in range(len(l)))   
             
 # save matrices 
