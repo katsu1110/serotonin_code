@@ -556,21 +556,10 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'c2sFormat'))
                     stlfp1{d} = stlfp1{d}(datasample(1:cur_dim, targ_dim, 'Replace', false), :);
                 end
             end
-            % is 5HT
-            is5ht = ismember(1, contains(lfplist{i}{2}, '5HT'));
 
             % save
-            us = strfind(lfplist{i}{1}, '_');
-            c2s_saver(stlfp0, stlfp1, data, lfplist{i}{1}(1:us(2)-1), is5ht, mypath)
-            
-%             % stimlus type
-%             if stmtype(i) == 0
-%                 stmtype(i) = find(strcmp(stmtypes, d0.ex.exp.e1.type));
-%             end
-% 
-%             % is mango
-%             animal(i) = strcmp(lfplist{i}{1}(1:2), 'ma');
-% 
+            c2s_saver(stlfp0, stlfp1, data, lfplist{i}{2}(1:end-4), mypath)
+ 
             disp(['session ' num2str(i) ' saved!'])
         catch
             disp(['session ' num2str(i) ' error'])
@@ -2587,12 +2576,7 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'CBEM'))
     end
 end
 
-function c2s_saver(stlfp0, stlfp1, data, fname, is5ht, mypath)
-if is5ht
-    fname = [fname, '_5HT'];
-else
-    fname = [fname, '_NaCl'];
-end
+function c2s_saver(stlfp0, stlfp1, data, fname, mypath)
 mkdir([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/' fname])
 save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/' fname '/stlfp0.mat'], 'stlfp0')
 save([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/' fname '/stlfp1.mat'], 'stlfp1')
