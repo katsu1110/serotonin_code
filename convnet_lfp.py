@@ -15,6 +15,7 @@ import scipy.io as sio
 import numpy as np
 import csv
 import multiprocessing
+from joblib import Parallel, delayed
 
 #import matplotlib.pyplot as plt
 #import seaborn as sns
@@ -103,9 +104,14 @@ def fit_session(i):
     return [fname, mean_acc[0].tolist(), mean_acc[1].tolist(), 
             mean_auc[0].tolist(), mean_auc[1].tolist()]
         
+results = [0]*len(l)
+for i in range(len(l)):
+    results[i] = fit_session(i)
+    
 #results = fit_session(0)
-pool = multiprocessing.Pool(multiprocessing.cpu_count())
-results = pool.map(fit_session, (i for i in range(len(l))))
+#num_cores = multiprocessing.cpu_count()
+#pool = multiprocessing.Pool(num_cores)
+#results = pool.map(fit_session, (i for i in range(len(l))))
 #results = Parallel(n_jobs=num_cores)(delayed(fit_session)(i) for i in range(len(l)))   
             
 # save matrices 
