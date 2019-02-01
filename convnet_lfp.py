@@ -21,7 +21,7 @@ import multiprocessing
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.layers import Conv1D, MaxPooling1D, GlobalAveragePooling1D
-from sklearn.model_selection import LeaveOneOut
+from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import roc_curve, auc
 
 # datapath ===========================================
@@ -44,18 +44,23 @@ def oned_convnet(n_time):
                 optimizer='rmsprop', metrics=['accuracy'])
     return model
 
+# model performance metric ==============
+def modelperf(y, ypredc, ypredp):
+    fpr, tpr = roc_curve(y, ypredp)
+    return np.sum(y==ypredc)/len(y), auc(fpr, tpr)
 
 # fit and evaluate =====================
 model = oned_convnet(141)
-loo = LeaveOneOut()
+n_split = 10
+cv = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=1220)
 def fit_session(i):    
     # load data
     stlfp0 = sio.loadmat(l[i] + 'stlfp0.mat')
     stlfp1 = sio.loadmat(l[i] + 'stlfp1.mat')
     
     # baseline or drug
-    acc_ses = [0]*2
-    auc_ses = [0]*2
+    accuracy = np.zeros((n_split, 2))
+    auroc = np.zeros((n_split, 2))
     for d in np.arange(2):
         # format data
         X = np.vstack((stlfp0['stlfp0'][0][d], stlfp1['stlfp1'][0][d]))
@@ -63,34 +68,28 @@ def fit_session(i):
         len0 = np.shape(stlfp0['stlfp0'][0][d])[0]
         len1 = np.shape(stlfp1['stlfp1'][0][d])[0]
         y = np.concatenate((np.zeros(len0, dtype=int), np.ones(len1, dtype=int)))
-        ypredc = np.zeros(len(y))
-        ypredp = np.zeros(len(y))
         
         # fit the model with leave-one-out
-        for train_idx, test_idx in loo.split(X):
-            # train and test datasets
-            X_train, X_test = X[train_idx], X[test_idx]
-            y_train, y_test = y[train_idx], y[test_idx]
-            
+        c = 0
+        for train_idx, test_idx in cv.split(X, y):            
             # model fitting
-            model.fit(X_train, y_train,
+            model.fit(X[train_idx], y[train_idx],
                   batch_size=32,
                   epochs=50,
                   verbose=1)
             
-            # prediction
-            ypredc[test_idx] = model.predict_classes(X_test).ravel()
-            ypredp[test_idx] = model.predict(X_test).ravel()
-            
-        # model scores
-        acc_ses[d] = np.sum(y==ypredc)/len(y)
-        fpr, tpr = roc_curve(y, ypredp)
-        auc_ses[d] = auc(fpr, tpr)
+            # prediction and evaluation
+            ypredc = model.predict_classes(X[test_idx]).ravel()
+            ypredp = model.predict(X[test_idx]).ravel()
+            accuracy[c,d], auroc[c,d] = modelperf(y[test_idx], ypredc, ypredp)
+            c += 1
     
     # outputs
     fname = l[i][l[i].find('data')+5:-1]
     print(fname + ' processed!')
-    return [fname, acc_ses[0], acc_ses[1], auc_ses[0], auc_ses[1]]
+    mean_acc = np.mean(accuracy, axis=0)
+    mean_auc = np.mean(auroc, axis=0)
+    return [fname, mean_acc[0], mean_acc[1], mean_auc[0], mean_auc[1]]
         
 results = fit_session(0)
 #pool = multiprocessing.Pool(multiprocessing.cpu_count())
