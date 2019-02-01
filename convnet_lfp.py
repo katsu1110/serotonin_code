@@ -26,6 +26,7 @@ from sklearn.metrics import roc_curve, auc
 
 # datapath ===========================================
 l = glob.glob(r'Z:/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/*/')
+l = l[0:3]
 
 # 1D CNN model ===============================================
 def oned_convnet(n_time):
