@@ -99,7 +99,7 @@ def fit_session(i):
     
     # save
     spath = mypath + '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/'
-    np.savetxt(spath + fname + 'cvscores.csv', np.concatenate((accuracy, auroc), axis=1), delimiter=',')
+    np.savetxt(spath + fname + '/cvscores.csv', np.concatenate((accuracy, auroc), axis=1), delimiter=',')
     
     return [fname, mean_acc[0].tolist(), mean_acc[1].tolist(), 
             mean_auc[0].tolist(), mean_auc[1].tolist()]
@@ -108,7 +108,7 @@ results = [0]*len(l)
 for i in range(len(l)):
     results[i] = fit_session(i)
     
-#results = fit_session(0)
+#results = fit_session(0)  
 #num_cores = multiprocessing.cpu_count()
 #pool = multiprocessing.Pool(num_cores)
 #results = pool.map(fit_session, (i for i in range(len(l))))
