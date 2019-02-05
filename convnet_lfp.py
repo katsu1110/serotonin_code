@@ -23,7 +23,7 @@ from joblib import Parallel, delayed
 from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.layers import Conv1D, MaxPooling1D, GlobalAveragePooling1D
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedKFold, LeaveOneOut
 from sklearn.metrics import roc_curve, auc
 
 # datapath ===========================================
@@ -58,8 +58,9 @@ def modelperf(y, ypredc, ypredp):
 
 # fit and evaluate =====================
 model = oned_convnet(141)
-n_split = 10
-cv = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=1220)
+n_split = 100
+#cv = StratifiedKFold(n_splits=n_split, shuffle=True, random_state=1220)
+cv = LeaveOneOut()
 def fit_session(i):    
     # load data
     stlfp0 = sio.loadmat(l[i] + 'stlfp0.mat')
@@ -78,7 +79,8 @@ def fit_session(i):
         
         # fit the model with leave-one-out
         c = 0
-        for train_idx, test_idx in cv.split(X, y):            
+        for train_idx, test_idx in cv.split(X, y):  
+#        for train_idx, test_idx in cv.split(X):
             # model fitting
             model.fit(X[train_idx], y[train_idx],
                   batch_size=32,
@@ -105,14 +107,14 @@ def fit_session(i):
             mean_auc[0].tolist(), mean_auc[1].tolist()]
         
 results = [0]*len(l)
-for i in range(len(l)):
-    results[i] = fit_session(i)
+#for i in range(len(l)):
+#    results[i] = fit_session(i)
     
 #results = fit_session(0)  
-#num_cores = multiprocessing.cpu_count()
+num_cores = multiprocessing.cpu_count()
 #pool = multiprocessing.Pool(num_cores)
 #results = pool.map(fit_session, (i for i in range(len(l))))
-#results = Parallel(n_jobs=num_cores)(delayed(fit_session)(i) for i in range(len(l)))   
+results = Parallel(n_jobs=num_cores)(delayed(fit_session)(i) for i in range(len(l)))   
             
 # save matrices 
 with open(mypath + "/Katsuhisa/serotonin_project/LFP_project/Data/c2s/results.csv", "w") as outfile:

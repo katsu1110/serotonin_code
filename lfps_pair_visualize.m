@@ -1240,9 +1240,11 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'coherence'))==1
             bandrange = {[0, 7], [8, 13], [14, 24], [36, 40], [40, 44], [44, 48]};
     end
     lenb = length(bandnames);
+    xx = [3 10];
+    yy = [0.1 0.4];
     freq = datast{end}.cond(1).coherence.f{end}';
     lenf = length(freq);
-    yy = [0 0];
+    analysisfrange = freq(freq >= xx(1) & freq <= xx(2));
     coh = cell(1, ss);
     for s = 1:ss
         % data extraction
@@ -1264,8 +1266,8 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'coherence'))==1
 
         % visualize
         for k = 1:ndrug
-            statistics.drug(k).coh = cell(lenb, 2);
-            statistics.drug(k).phi = cell(lenb, 2);
+            statistics.drug(k).coh = cell(lenf, 2);
+            statistics.drug(k).phi = cell(lenf, 2);
         end
         for a = 1:lena
             for k = 1:ndrug
@@ -1285,7 +1287,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'coherence'))==1
                 for d = 1:2
                     cohd(d, :) = nanmean(matc{d}, 1);
                     sem = nanstd(matc{d}, [], 1)/sqrt(lenses);
-                    fill_between(freq, cohd(d, :) - sem, cohd(d, :) + sem, cols(d, :), 0.5)
+                    fill_between(freq, cohd(d, :) - sem, cohd(d, :) + sem, cols(d, :), 0.1)
                     hold on;
                     plot(freq, cohd(d, :), '-', 'color', cols(d, :))
                     hold on; 
@@ -1307,16 +1309,19 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'coherence'))==1
                 end
 
                 % format        
-                yy_temp = get(gca, 'YLim');
-                if yy_temp(1) < yy(1)
-                    yy(1) = yy_temp(1);
-                end
-                if yy_temp(2) > yy(2)
-                    yy(2) = yy_temp(2);
-                end
-%                 set(gca, 'XScale', 'log')
+                ylim(yy)
+%                 yy_temp = get(gca, 'YLim');
+%                 if yy_temp(1) < yy(1)
+%                     yy(1) = yy_temp(1);
+%                 end
+%                 if yy_temp(2) > yy(2)
+%                     yy(2) = yy_temp(2);
+%                 end
                 set(gca, 'box', 'off', 'tickdir', 'out')
-                xlim([3 48])
+%                 xlim([3 48])
+                xlim([3 13])
+%                 set(gca, 'XScale', 'log')
+%                 set(gca, 'YScale', 'log')
                 if k==1 && a==1
                     title(stmlab{s})            
                 end
@@ -1390,57 +1395,67 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'coherence'))==1
             
             % stats
             figure(j + 1);
-            pbar = nan(1, length(freq));
-            for b = 1:lenb
-                % ttest
-                if ndrug == 1
-                    stats = pair_tests([mean(statistics.drug(1).coh{b, 1}, 2), ...
-                        mean(statistics.drug(1).coh{b, 2}, 2)]);
-                else
-                    stats = pair_tests([mean(statistics.drug(1).coh{b, 1}, 2), ...
-                        mean(statistics.drug(1).coh{b, 2}, 2)], ...
-                        [mean(statistics.drug(2).coh{b, 1}, 2), ...
-                        mean(statistics.drug(2).coh{b, 2}, 2)]);
-                end
-
-                % within (cond 1)
-                subplot(lena*ndrug, ss, s+ ndrug*ss*(a-1))
-                if stats.pair(1).signrank.p < 0.05/lenb
-                    hold on;
-                    if b < lenb
-                        plot(bandrange{b}, yy(2)*[1 1],  '-', 'color', 0.5*[1 1 1], 'linewidth', 2)
-                    else
-                         plot([bandrange{b}(1) 80], yy(2)*[1 1],  '-', 'color', 0.5*[1 1 1], 'linewidth', 2)
-                    end
-                end
+%             pbar = nan(1, length(analysisfrange));
+%             for b = 1:length(analysisfrange)
+%                 pval = signrank(squeeze(coh{s}(:,analysisfrange==analysisfrange(b),1)), ...
+%                     squeeze(coh{s}(:,analysisfrange==analysisfrange(b),2)));
+%                 if pval < 0.05/length(analysisfrange)
+%                     hold on;
+%                     plot
+%                 end
+%             end
+%             for b = 1:length(freq)
                 
-                if ndrug > 1
-                    % within (cond 2)
-                    subplot(lena*ndrug, ss, s + ss*(ndrug-1) + ndrug*ss*(a-1))
-                    disp([])
-                    if stats.pair(2).signrank.p < 0.05/lenb
-                        hold on;
-                        if b < lenb
-                            plot(bandrange{b}, yy(2)*[1 1],  '-', 'color', 0.5*[1 1 1], 'linewidth', 2)
-                        else
-                             plot([bandrange{b}(1) 80], yy(2)*[1 1],  '-', 'color', 0.5*[1 1 1], 'linewidth', 2)
-                        end
-                    end  
-                    
-                    % across (cond 1 vs 2)
-                    disp([bandnames{b} ': NaCl vs 5HT; p=' num2str(stats.ranksum.p)])
-                    if stats.ranksum.p < 0.05/lenb
-                        hold on;
-                        if b < lenb
-                            plot(bandrange{b}, (0.9*(yy(2)-yy(1)) + yy(2))*[1 1],  '-', 'color', 0.5*[1 0 0], 'linewidth', 2)
-                        else
-                             plot([bandrange{b}(1) 80], (0.9*(yy(2)-yy(1)) + yy(2))*[1 1],  '-', 'color', [1 0 0], 'linewidth', 2)
-                        end
-                    end 
-                end
-            end
-            yy_temp = get(gca, 'YLim');
-            plot(freq, pbar*yy_temp(2), '-', 'color', 0.5*[1 1 1], 'linewidth', 3)
+%             for b = 1:lenb
+%                 % ttest
+%                 if ndrug == 1
+%                     stats = pair_tests([mean(statistics.drug(1).coh{b, 1}, 2), ...
+%                         mean(statistics.drug(1).coh{b, 2}, 2)]);
+%                 else
+%                     stats = pair_tests([mean(statistics.drug(1).coh{b, 1}, 2), ...
+%                         mean(statistics.drug(1).coh{b, 2}, 2)], ...
+%                         [mean(statistics.drug(2).coh{b, 1}, 2), ...
+%                         mean(statistics.drug(2).coh{b, 2}, 2)]);
+%                 end
+% 
+%                 % within (cond 1)
+%                 subplot(lena*ndrug, ss, s+ ndrug*ss*(a-1))
+%                 if stats.pair(1).signrank.p < 0.05/lenb
+%                     hold on;
+%                     if b < lenb
+%                         plot(bandrange{b}, yy(2)*[1 1],  '-', 'color', 0.5*[1 1 1], 'linewidth', 2)
+%                     else
+%                          plot([bandrange{b}(1) 80], yy(2)*[1 1],  '-', 'color', 0.5*[1 1 1], 'linewidth', 2)
+%                     end
+%                 end
+%                 
+%                 if ndrug > 1
+%                     % within (cond 2)
+%                     subplot(lena*ndrug, ss, s + ss*(ndrug-1) + ndrug*ss*(a-1))
+%                     disp([])
+%                     if stats.pair(2).signrank.p < 0.05/lenb
+%                         hold on;
+%                         if b < lenb
+%                             plot(bandrange{b}, yy(2)*[1 1],  '-', 'color', 0.5*[1 1 1], 'linewidth', 2)
+%                         else
+%                              plot([bandrange{b}(1) 80], yy(2)*[1 1],  '-', 'color', 0.5*[1 1 1], 'linewidth', 2)
+%                         end
+%                     end  
+%                     
+%                     % across (cond 1 vs 2)
+%                     disp([bandnames{b} ': NaCl vs 5HT; p=' num2str(stats.ranksum.p)])
+%                     if stats.ranksum.p < 0.05/lenb
+%                         hold on;
+%                         if b < lenb
+%                             plot(bandrange{b}, (0.9*(yy(2)-yy(1)) + yy(2))*[1 1],  '-', 'color', 0.5*[1 0 0], 'linewidth', 2)
+%                         else
+%                              plot([bandrange{b}(1) 80], (0.9*(yy(2)-yy(1)) + yy(2))*[1 1],  '-', 'color', [1 0 0], 'linewidth', 2)
+%                         end
+%                     end 
+%                 end
+%             end
+%             yy_temp = get(gca, 'YLim');
+%             plot(freq, pbar*yy_temp(2), '-', 'color', 0.5*[1 1 1], 'linewidth', 3)
         end
     end
     
