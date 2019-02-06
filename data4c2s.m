@@ -192,6 +192,7 @@ for d = 1:2 % baseline or drug
                 & para.ts <= para.window{1}(2));
             data{c}.calcium = lfp;
 %             data{d}.calcium = [data{d}.calcium, lfp];
+            c = c + 1;
         end
     end
 end
