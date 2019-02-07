@@ -1,0 +1,1 @@
+for d in /gpfs01/nienborg/group/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/*/; do cd "$d"; c2s preprocess data.mat preprocessed.mat; c2s leave-one-out preprocessed.mat predictions.mat; done

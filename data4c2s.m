@@ -166,9 +166,9 @@ end
 
 % generate 'data' for c2s analysis
 data = cell(1, 2);
+c = 1;
 for d = 1:2 % baseline or drug
 %     trt = 0;
-    c = 1;
     for i = 1:lenv 
         for n = 1:para.cond(d).ntr(i)
             % sampling rate
