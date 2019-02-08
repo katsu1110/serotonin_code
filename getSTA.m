@@ -38,6 +38,10 @@ for i = 1:nspk
     else
         seg = lfptrace(tstrt:tend);
     end
-    stlfp(i, :) = seg;
+    if ~isempty(seg)
+        stlfp(i, :) = seg;
+    else
+        continue
+    end
 end
 stlfp(any(isnan(stlfp), 2), :) = [];

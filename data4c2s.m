@@ -182,7 +182,7 @@ for d = 1:2 % baseline or drug
 %             data{c}.calcium = [];
 
             % spike times (ms)
-            data{c}.spike_times = 1000*para.cond(d).spk{j, i}{n};
+            data{c}.spike_times = 1000*para.cond(d).spk{j, i}{n}';
 %             spkt = 1000*(para.cond(d).spk{j, i}{n} - para.window{1}(1)) + trt;
 %             data{c}.spike_times = [data{c}.spike_times, spkt'];
 %             trt = trt + 1000*(para.window{1}(2) - para.window{1}(1));

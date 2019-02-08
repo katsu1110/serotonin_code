@@ -6,17 +6,17 @@ function test_reconstruct_stLFP(data)
 close all;
 figure;
 col = {'k', 'r'};
+d = 1;
 stlfp = cell(1,2);
 for i = 1:length(data)
     stlfp_tr = getSTA(data{i}.calcium, 1:length(data{i}.calcium), data{i}.spike_times, 0.05, data{i}.fps);
     if data{i}.cell_num == 1
         stlfp{1} = [stlfp{1}; stlfp_tr]; 
     else
-        stlfp{2} = [stlfp{2}; stlfp_tr];
+        stlfp{1} = [stlfp{1}; stlfp_tr];
     end
-end
-for c = 1:2
-    plot(-50:50, mean(stlfp{c}, 1), 'color', col{c})
+    d = d + 1;
+    plot(-50:50, mean(stlfp, 1), 'color', col{c})
     hold on;
 end
 
