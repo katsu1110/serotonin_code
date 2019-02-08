@@ -543,19 +543,19 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'c2sFormat'))
             d2 = load([loadpath lfplist{i}{2}], 'ex');
             
             % analysis
-            [~, stlfp0, stlfp1, data] = data4c2s(d0.ex, d2.ex, 'LFP_prepro', 0, 1);
+            [~, stlfp0, stlfp1, data] = data4c2s(d0.ex, d2.ex, 'LFP_prepro', 1, 1);
             
-            % resample stlfp0 to match the dimension of stlfp1
-            rng(19891220);
-            targ_dim = min([size(stlfp1{1}, 1), size(stlfp1{2}, 1)]);
-            for d = 1:2
-                cur_dim = size(stlfp0{d}, 1);
-                stlfp0{d} = stlfp0{d}(datasample(1:cur_dim, targ_dim, 'Replace', false), :);
-                cur_dim = size(stlfp1{d}, 1);
-                if cur_dim > targ_dim
-                    stlfp1{d} = stlfp1{d}(datasample(1:cur_dim, targ_dim, 'Replace', false), :);
-                end
-            end
+%             % resample stlfp0 to match the dimension of stlfp1
+%             rng(19891220);
+%             targ_dim = min([size(stlfp1{1}, 1), size(stlfp1{2}, 1)]);
+%             for d = 1:2
+%                 cur_dim = size(stlfp0{d}, 1);
+%                 stlfp0{d} = stlfp0{d}(datasample(1:cur_dim, targ_dim, 'Replace', false), :);
+%                 cur_dim = size(stlfp1{d}, 1);
+%                 if cur_dim > targ_dim
+%                     stlfp1{d} = stlfp1{d}(datasample(1:cur_dim, targ_dim, 'Replace', false), :);
+%                 end
+%             end
 
             % save
             c2s_saver(stlfp0, stlfp1, data, lfplist{i}{2}(1:end-4), mypath)

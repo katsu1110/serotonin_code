@@ -14,7 +14,6 @@ end
 
 metrics = {'correlations', 'info'};
 metricnames = {'correlation', 'MI'};
-lenm = length(metrics);
 ani = {'s', 'o'};
 col = {'r', 'k'};
 
@@ -34,36 +33,23 @@ for i = 1:length(dirs)
     elseif contains(dirs(i).name, 'NaCl')
         met(i, 2) = 0;
     end
-    c = 3;
     for k = 1:length(metrics)
-%         try
+        try
             data = load([dirs(i).folder '/' dirs(i).name '/data.mat']);
-            data = data.data;
             ntr = length(data);
             bd = ones(1, ntr);
             for n = 1:ntr
                 bd(n) = data{n}.cell_num;
             end
             out = load([dirs(i).folder '/' dirs(i).name '/' metricnames{k} '.mat']);
-            out = out.(metrics{k});
             for b = 1:2
-                met(i, c) = nanmean(out(1, bd==b), 2);
-                met(i, c + 1) = nanstd(out(1, bd==b), [], 2)/sqrt(sum(bd==b));
-                c = c + 2;
+                met(i, 2+3*(k-1)+b) = mean(out(1, bd==b), 2);
+                met(i, 3+3*(k-1)+b) = std(out(1, bd==b), 2)/sqrt(sum(bd==1));
             end
-%         catch
-%             continue
-%         end
+        catch
+            continue
+        end
     end        
 end
 
-save([mypath 'Katsuhisa/serotonin_project/LFP_project/Data/c2s/met.mat'], 'met')
-close all;
-figure;
-for k = 1:lenm
-    subplot(1,2,k)
-    unity_scatter(met(:, 3+4*(k-1)), met(:, 5+4*(k-1)), met(:, 2))
-    title(metricnames{k})
-    xlabel('baseline')
-    ylabel('drug')
-end
+for 
