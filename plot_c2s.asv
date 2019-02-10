@@ -9,47 +9,27 @@ else
     mypath = '/gpfs01/nienborg/group/';
 end
 
-% % load results
-% M = csvread([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/results.csv'], 0, 1);
+load([mypath 'Katsuhisa/serotonin_project/LFP_project/Data/c2s/met.mat'])
 
 metrics = {'correlations', 'info'};
 metricnames = {'correlation', 'MI'};
+lenm = length(metrics);
 ani = {'s', 'o'};
+lena = length(ani);
 col = {'r', 'k'};
 
-datapath = [mypath 'Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/'];
-dirs = dir(datapath);
-dirs(1:2) = [];
-lend = length(dirs);
-met = nan(lend, 10); % animal, drug, corr mean (base), corr sem (base), corr mean (drug), corr sem (drug), ...
-for i = 1:length(dirs)
-    if contains(dirs(i).name, 'ka_')
-        met(i,1) = 0;
-    elseif contains(dirs(i).name, 'ma_')
-        met(i, 1) = 1;
-    end
-    if contains(dirs(i).name, '5HT')
-        met(i,2) = 1;
-    elseif contains(dirs(i).name, 'NaCl')
-        met(i, 2) = 0;
-    end
-    for k = 1:length(metrics)
-        try
-            data = load([dirs(i).folder '/' dirs(i).name '/data.mat']);
-            ntr = length(data);
-            bd = ones(1, ntr);
-            for n = 1:ntr
-                bd(n) = data{n}.cell_num;
-            end
-            out = load([dirs(i).folder '/' dirs(i).name '/' metricnames{k} '.mat']);
-            for b = 1:2
-                met(i, 2+3*(k-1)+b) = mean(out(1, bd==b), 2);
-                met(i, 3+3*(k-1)+b) = std(out(1, bd==b), 2)/sqrt(sum(bd==1));
-            end
-        catch
-            continue
+close all;
+figure;
+for a = 1:lena
+    for k = 1:lenm
+        for d = 1:2
+            subplot(lenm, d, k)
+            cond = met(:, 1)==a-1 & met(:, 2)==d-1;
+            scatter(met(cond, 3+4*(k-1)), met(cond, 5+4*(k-1)), 10, ani{a}, ...
+                'makerfacecolor', col{d}, 'makeredgecolor', col{d}, 'markerfacealpha')
+            title(metricnames{k})
+            xlabel('baseline')
+            ylabel('drug')
         end
-    end        
+    end
 end
-
-for 
