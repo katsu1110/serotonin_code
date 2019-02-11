@@ -39,7 +39,7 @@ cell_num = ones(1, lend);
 for i = 1:lend
     cell_num(i) = olddata{i}.cell_num;
 end
-lenc = length(cell_num);
+lenc = length(unique(cell_num));
 data = cell(1, lenc);
 for i = 1:lenc
     data{i}.fps = olddata{1}.fps;
@@ -89,9 +89,7 @@ data1 = data;
 data1 = data1(idx==1);
 data2 = data;
 data2 = data2(idx==2);
-for i = 1:lend
-    data{i}.cell_num = 1;
-end
+
 
 % function [data_train, data_test] = split_traintest(data, weights)
 % rng(19891220);
