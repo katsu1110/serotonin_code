@@ -1,0 +1,53 @@
+function extract_c2s
+%%
+% extract info from c2s analysis
+%
+
+if ispc
+    mypath = 'Z:/';
+else
+    mypath = '/gpfs01/nienborg/group/';
+end
+
+datapath = [mypath 'Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/'];
+dirs = dir(datapath);
+dirs(1:2) = [];
+lend = length(dirs);
+met = nan(lend, 10); % animal, drug, corr mean (base), corr sem (base), corr mean (drug), corr sem (drug), ...
+mfnames = {'correlation', 'MI'};
+fieldnames = {'correlations', 'info'};
+lenm = length(mfnames);
+for i = 1:length(dirs)
+    if contains(dirs(i).name, 'ka_')
+        met(i,1) = 0;
+    elseif contains(dirs(i).name, 'ma_')
+        met(i, 1) = 1;
+    end
+    if contains(dirs(i).name, '5HT')
+        met(i,2) = 1;
+    elseif contains(dirs(i).name, 'NaCl')
+        met(i, 2) = 0;
+    end
+    
+    % 
+    data = load([dirs(i).folder '/' dirs(i).name '/correlation_base.mat']);
+    met(i, 3) = nanmean(data.correlations(2, :), 2);
+    met(i, 4) = nanstd(data.correlations(2, :), [], 2)/sqrt(size(data.correlations, 2));
+    data1 = load([dirs(i).folder '/' dirs(i).name '/correlation_train.mat']);
+    data2 = load([dirs(i).folder '/' dirs(i).name '/correlation_test.mat']);
+    data.correlations = [data1.correlations, data2.correlations];
+    met(i, 5) = nanmean(data.correlations(2, :), 2);
+    met(i, 6) = nanstd(data.correlations(2, :), [], 2)/sqrt(size(data.correlations, 2));
+    
+    % information gain
+    data = load([dirs(i).folder '/' dirs(i).name '/MI_base.mat']);
+    met(i, 7) = nanmean(data.loglik(2, :), 2);
+    met(i, 8) = nanstd(data.loglik(2, :), [], 2)/sqrt(size(data.loglik, 2));
+    data1 = load([dirs(i).folder '/' dirs(i).name '/MI_train.mat']);
+    data2 = load([dirs(i).folder '/' dirs(i).name '/MI_test.mat']);
+    data.loglik = [data1.loglik, data2.loglik];
+    met(i, 9) = nanmean(data.loglik(2, :), 2);
+    met(i, 10) = nanstd(data.loglik(2, :), [], 2)/sqrt(size(data.loglik, 2));     
+end
+
+save([mypath 'Katsuhisa/serotonin_project/LFP_project/Data/c2s/met.mat'], 'met')

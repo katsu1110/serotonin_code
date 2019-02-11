@@ -543,7 +543,7 @@ if sum(strcmp(type, 'all')) || sum(strcmp(type,  'c2sFormat'))
             d2 = load([loadpath lfplist{i}{2}], 'ex');
             
             % analysis
-            [~, stlfp0, stlfp1, data] = data4c2s(d0.ex, d2.ex, 'LFP_prepro', 1, 1);
+            [~, stlfp0, stlfp1, data] = data4c2s(d0.ex, d2.ex, 'LFP_prepro', 0, 1);
             
 %             % resample stlfp0 to match the dimension of stlfp1
 %             rng(19891220);

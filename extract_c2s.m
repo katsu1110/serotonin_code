@@ -9,14 +9,14 @@ else
     mypath = '/gpfs01/nienborg/group/';
 end
 
-% % load results
-% M = csvread([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/results.csv'], 0, 1);
-
 datapath = [mypath 'Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/'];
 dirs = dir(datapath);
 dirs(1:2) = [];
 lend = length(dirs);
 met = nan(lend, 10); % animal, drug, corr mean (base), corr sem (base), corr mean (drug), corr sem (drug), ...
+mfnames = {'correlation', 'MI'};
+fieldnames = {'correlations', 'info'};
+lenm = length(mfnames);
 for i = 1:length(dirs)
     if contains(dirs(i).name, 'ka_')
         met(i,1) = 0;
@@ -28,27 +28,18 @@ for i = 1:length(dirs)
     elseif contains(dirs(i).name, 'NaCl')
         met(i, 2) = 0;
     end
-    c = 3;
-    for k = 1:length(metrics)
-%         try
-            data = load([dirs(i).folder '/' dirs(i).name '/data.mat']);
-            data = data.data;
-            ntr = length(data);
-            bd = ones(1, ntr);
-            for n = 1:ntr
-                bd(n) = data{n}.cell_num;
-            end
-            out = load([dirs(i).folder '/' dirs(i).name '/' metricnames{k} '.mat']);
-            out = out.(metrics{k});
-            for b = 1:2
-                met(i, c) = nanmean(out(1, bd==b), 2);
-                met(i, c + 1) = nanstd(out(1, bd==b), [], 2)/sqrt(sum(bd==b));
-                c = c + 2;
-            end
-%         catch
-%             continue
-%         end
-    end        
+    
+    % performance
+    for m = 1:lenm
+        data = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_base.mat']);
+        met(i, 3+4*(m-1)) = nanmean(data.(fieldnames{m})(2, :), 2);
+        met(i, 4+4*(m-1)) = nanstd(data.(fieldnames{m})(2, :), [], 2)/sqrt(size(data.(fieldnames{m}), 2));
+        data1 = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_train.mat']);
+        data2 = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_test.mat']);
+        data.(fieldnames{m}) = [data1.(fieldnames{m}), data2.(fieldnames{m})];
+        met(i, 5+4*(m-1)) = nanmean(data.(fieldnames{m})(2, :), 2);
+        met(i, 6+4*(m-1)) = nanstd(data.(fieldnames{m})(2, :), [], 2)/sqrt(size(data.(fieldnames{m}), 2));
+    end
 end
 
 save([mypath 'Katsuhisa/serotonin_project/LFP_project/Data/c2s/met.mat'], 'met')
