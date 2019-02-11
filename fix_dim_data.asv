@@ -16,13 +16,10 @@ for i = 1:length(listings)
         [data_base, data1, data2] = split_traintest(data_base);        
         data_drug = data(cell_num==uni(2));
         data = data_base;
-        data = data2vec(data);
         save([listings(i).folder '/' listings(i).name '/data_base.mat'], 'data')
         data = data_concatenate(data1, data_drug);
-        data = data2vec(data);
         save([listings(i).folder '/' listings(i).name '/data_train.mat'], 'data')
         data = data_concatenate(data2, data_drug);
-        data = data2vec(data);
         save([listings(i).folder '/' listings(i).name '/data_test.mat'], 'data')
 %         data = data_drug;
 %         save([listings(i).folder '/' listings(i).name '/data_drug.mat'], 'data')
@@ -58,7 +55,7 @@ for i = 1:lend
     data{olddata{i}.cell_num}.calcium = [data{olddata{i}.cell_num}.calcium, ...
         olddata{i}.calcium];
     
-    c(olddata{i}.cell_num) = c(olddata{i}.cell_num) + 1000*length(olddata{i}.calcium)/data{olddata{i}.cell_num}.fps;
+    c(olddata{i}.cell_num) = c(olddata{i}.cell_num) + length(olddata{i}.calcium)/data{olddata{i}.cell_num}.fps;
 end
 
 
