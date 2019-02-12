@@ -18,6 +18,7 @@ mfnames = {'correlation', 'MI'};
 fieldnames = {'correlations', 'info'};
 lenm = length(mfnames);
 for i = 1:length(dirs)
+    disp(['ses ' num2str(i) ': ' dirs(i).name])
     if contains(dirs(i).name, 'ka_')
         met(i,1) = 0;
     elseif contains(dirs(i).name, 'ma_')
