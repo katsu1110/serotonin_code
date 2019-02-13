@@ -13,7 +13,9 @@ datapath = [mypath 'Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/'];
 dirs = dir(datapath);
 dirs(1:2) = [];
 lend = length(dirs);
-met = nan(lend, 10); % animal, drug, corr mean (base), corr sem (base), corr mean (drug), corr sem (drug), ...
+
+% animal, drug, corr (base), corr (drug), MI (base), MI (drug), corr (hFR), corr (lFR), MI (hFR), MI (lFR)
+met = nan(lend, 10); 
 mfnames = {'correlation', 'MI'};
 fieldnames = {'correlations', 'info'};
 lenm = length(mfnames);
@@ -32,14 +34,20 @@ for i = 1:length(dirs)
     
     % performance
     for m = 1:lenm
+        % baseline
         data = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_base.mat']);
-        met(i, 3+4*(m-1)) = nanmean(data.(fieldnames{m})(2, :), 2);
-        met(i, 4+4*(m-1)) = nanstd(data.(fieldnames{m})(2, :), [], 2)/sqrt(size(data.(fieldnames{m}), 2));
+        met(i, 3+2*(m-1)) = nanmean(data.(fieldnames{m})(2, :), 2);
+        
+        % drug
         data1 = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_train.mat']);
         data2 = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_test.mat']);
         data.(fieldnames{m}) = [data1.(fieldnames{m}), data2.(fieldnames{m})];
-        met(i, 5+4*(m-1)) = nanmean(data.(fieldnames{m})(2, :), 2);
-        met(i, 6+4*(m-1)) = nanstd(data.(fieldnames{m})(2, :), [], 2)/sqrt(size(data.(fieldnames{m}), 2));
+        met(i, 4+2*(m-1)) = nanmean(data.(fieldnames{m})(2, :), 2);
+        
+        % FR control
+        data = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_fr.mat']);
+        met(i, 7+2*(m-1)) = data.(fieldnames{m})(2, 2);
+        met(i, 8+2*(m-1)) = data.(fieldnames{m})(2, 1);
     end
 end
 
