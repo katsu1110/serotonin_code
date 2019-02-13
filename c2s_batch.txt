@@ -8,5 +8,8 @@ for d in /gpfs01/nienborg/group/Katsuhisa/serotonin_project/LFP_project/Data/c2s
 # training
 for d in /gpfs01/nienborg/group/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/*/; do cd "$d"; c2s preprocess data_base.mat preprocessed_base.mat; c2s preprocess data_train.mat preprocessed_train.mat; c2s preprocess data_test.mat preprocessed_test.mat; c2s leave-one-out preprocessed_base.mat predicted_base.mat; c2s leave-one-out preprocessed_train.mat predicted_train.mat; c2s leave-one-out preprocessed_test.mat predicted_test.mat; done
 
-# test
+# evaluate
 for d in /gpfs01/nienborg/group/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/*/; do cd "$d"; c2s evaluate -s 1 4 -o correlation_base.mat -m corr preprocessed_base.mat predicted_base.mat; c2s evaluate -s 1 4 -o correlation_train.mat -m corr preprocessed2_train.mat predicted2_train.mat; c2s evaluate -s 1 4 -o correlation_test.mat -m corr preprocessed2_test.mat predicted2_test.mat; c2s evaluate -s 1 4 -o MI_base.mat -m info preprocessed_base.mat predicted_base.mat; c2s evaluate -s 1 4 -o MI_train.mat -m info preprocessed2_train.mat predicted2_train.mat; c2s evaluate -s 1 4 -o MI_test.mat -m info preprocessed2_test.mat predicted2_test.mat; done
+
+# FR control
+for d in /gpfs01/nienborg/group/Katsuhisa/serotonin_project/LFP_project/Data/c2s/data/*/; do cd "$d"; c2s preprocess data_fr.mat preprocessed_fr.mat; c2s leave-one-out preprocessed_fr.mat predicted_fr.mat; c2s evaluate -s 1 4 -o correlation_fr.mat -m corr preprocessed_fr.mat predicted_fr.mat; c2s evaluate -s 1 4 -o MI_fr.mat -m info preprocessed_fr.mat predicted_fr.mat; done

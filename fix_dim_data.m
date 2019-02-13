@@ -12,18 +12,30 @@ for i = 1:length(listings)
             cell_num(j) = data{j}.cell_num;
         end
         uni = unique(cell_num);
+        
+        % baseline
         data_base = data(cell_num==uni(1));
         [data_base, data1, data2] = split_traintest(data_base);        
         data_drug = data(cell_num==uni(2));
         data = data_base;
         data = data2vec(data);
         save([listings(i).folder '/' listings(i).name '/data_base.mat'], 'data')
+        
+        % baseline 1 + drug
         data = data_concatenate(data1, data_drug);
         data = data2vec(data);
         save([listings(i).folder '/' listings(i).name '/data_train.mat'], 'data')
+        
+        % baseline 2 + drug
         data = data_concatenate(data2, data_drug);
         data = data2vec(data);
         save([listings(i).folder '/' listings(i).name '/data_test.mat'], 'data')
+        
+        % FR control
+        data_fr = split_traintest(data_base, 'FRcontrol');
+        data = data2vec(data_fr);
+        save([listings(i).folder '/' listings(i).name '/data_fr.mat'], 'data')
+        
 %         data = data_drug;
 %         save([listings(i).folder '/' listings(i).name '/data_drug.mat'], 'data')
 %         save([listings(i).folder '/' listings(i).name '/data.mat'], 'data')
@@ -78,12 +90,34 @@ for i = 1:len2
     c = c + 1;
 end
 
-function [data, data1, data2] = split_traintest(data)
-rng(19891220);
+function [data, data1, data2] = split_traintest(data, splittype)
+if nargin < 2; splittype = 'random'; end
 lend = length(data);
-idx = randi(2, 1, lend);
-for i = 1:lend
-    data{i}.cell_num = idx(i);
+switch splittype
+    case 'random'
+        rng(19891220);
+        idx = randi(2, 1, lend);
+        for i = 1:lend
+            data{i}.cell_num = idx(i);
+        end
+    case 'FRcontrol'
+        spikecounts = zeros(1, lend);
+        for i = 1:lend
+            spikecounts(i) = length(data{i}.spike_times);
+        end
+        [~, sortidx] = sort(spikecounts, 'ascend');
+        
+        % median split
+        idx = zeros(1, lend);
+        for i = 1:lend
+            if i < lend/2
+                idx(sortidx(i)) = 1;
+                data{sortidx(i)}.cell_num = 1;
+            else
+                idx(sortidx(i)) = 2;
+                data{sortidx(i)}.cell_num = 2;
+            end
+        end
 end
 data1 = data;
 data1 = data1(idx==1);
