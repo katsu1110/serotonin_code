@@ -142,41 +142,70 @@ end
 
 % Spike-triggered LFP =====================
 if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'sta'))
+    sta = cell(lenv, 2);
     for d = 1:2
-        for i = 1:lenv
-            sta = [];
+       for i = 1:lenv
             for n = 1:para.cond(d).ntr(i)
-                try      
-                    % compute a standard STA
-                    stlfp = getSTA(para.cond(d).trials{i}(n).(lfpfield), ...
-                        para.cond(d).trials{i}(n).LFP_prepro_time, ...
-                        para.cond(d).spk{j, i}{n}, para.wnd, fs);                
-                    sta = [sta; stlfp];
-                catch
-                    continue
+                % compute a standard STA
+                stlfp = getSTA(para.cond(d).trials{i}(n).(lfpfield), ...
+                    para.cond(d).trials{i}(n).LFP_prepro_time, ...
+                    para.cond(d).spk{1, i}{n}, para.wnd, fs);       
+
+                if ~isnan(stlfp)
+                    % stack stLFP
+                    sta{i, d} = [sta{i, d}; stlfp];
                 end
             end
-            if ~isempty(sta)
+       end
+    end
+    
+    % use the same number of spikes for baseline and drug
+    if thin==1
+        rng(19891229);
+        for i = 1:lenv
+            n_min = min([size(sta{i, 1}, 1), size(sta{i, 2}, 1)]);
+            for d = 1:2
+               if size(sta{i, d}, 1) > n_min
+                  idx = datasample(1:size(sta{i, d}, 1), n_min, 'Replace', false);
+                  sta{i, d} = sta{i, d}(idx, :);
+               end
+            end
+        end
+    end
+    
+    % assign struct
+    for d = 1:2
+        for i = 1:lenv
+            para.cond(d).sta.f{i} = [];
+            para.cond(d).sta.t{i} = [];
+            para.cond(d).sta.p{i} = [];          
+            if ~isempty(sta{i, d})
                 % STA as a function of stimulus type
-                para.cond(d).sta.mean(i,:) = nanmean(sta, 1);
-                para.cond(d).sta.sd(i,:) = nanstd(sta, [], 1);
-                para.cond(d).sta.nspk(i) = size(sta, 1);
+                para.cond(d).sta.mean(i,:) = nanmean(sta{i, d}, 1);
+                para.cond(d).sta.sd(i,:) = nanstd(sta{i, d}, [], 1);
+                para.cond(d).sta.nspk(i) = size(sta{i, d}, 1);
 
-                % STA spectrogram
-                [para.cond(d).sta.s{i}, para.cond(d).sta.f{i}, para.cond(d).sta.t{i}, para.cond(d).sta.p{i}] = ...
+                % mean STA spectrogram
+                [~, para.cond(d).sta.f{i}, ~, p] = ...
                     spectrogram_frange(para.cond(d).sta.mean(i,:), 95, fs, [0 100]);
+                para.cond(d).sta.p{i} = nanmean(p, 3);
+    %                 [para.cond(d).sta.p{i}, para.cond(d).sta.t{i}, ...
+    %                     para.cond(d).sta.f{i}] = mtspecgramc(sta', movwin, params);
+                para.cond(d).sta.t{i} = linspace(-para.wnd, para.wnd, length(para.cond(d).sta.mean(1,:)));
+    %                 para.cond(d).sta.f{i} = para.cond(d).spectrogram.f{i};
+    %                 para.cond(d).sta.p{i} = tfa./para.cond(d).sta.nspk(i);
             else
                 para.cond(d).sta.mean(i,:) = nan(1, length(-para.wnd:1/fs:para.wnd));
                 para.cond(d).sta.sd(i,:) = para.cond(d).sta.mean(i,:);
                 para.cond(d).sta.nspk(i) = 0;
-                para.cond(d).sta.s{i} = nan;
-                para.cond(d).sta.f{i} = nan;
                 para.cond(d).sta.t{i} = nan;
+                para.cond(d).sta.f{i} = nan;
                 para.cond(d).sta.p{i} = nan;
             end
-        end  
-    end     
+        end
+    end  
 end
+
 
 % Tuning ================================
 if ismember(1, contains(analysis, 'all')) || ismember(1, contains(analysis, 'tuning'))
