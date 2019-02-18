@@ -34,21 +34,36 @@ for i = 1:length(dirs)
     
     % performance
     for m = 1:lenm
+%         % baseline
+%         data = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_base.mat']);
+%         met(i, 3+2*(m-1)) = nanmean(data.(fieldnames{m})(2, :), 2);
+        
+%         % drug
+%         data1 = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_train.mat']);
+%         data2 = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_test.mat']);
+%         data.(fieldnames{m}) = [data1.(fieldnames{m}), data2.(fieldnames{m})];
+%         met(i, 4+2*(m-1)) = nanmean(data.(fieldnames{m})(2, :), 2);
+        
+%         % FR control
+%         data = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_fr.mat']);
+%         met(i, 7+2*(m-1)) = data.(fieldnames{m})(2, 2);
+%         met(i, 8+2*(m-1)) = data.(fieldnames{m})(2, 1);
+        
         % baseline
-        data = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_base.mat']);
+        data = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_base_cv10.mat']);
         met(i, 3+2*(m-1)) = nanmean(data.(fieldnames{m})(2, :), 2);
         
         % drug
-        data1 = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_train.mat']);
-        data2 = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_test.mat']);
-        data.(fieldnames{m}) = [data1.(fieldnames{m}), data2.(fieldnames{m})];
+        data = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_drug_cv10.mat']);
         met(i, 4+2*(m-1)) = nanmean(data.(fieldnames{m})(2, :), 2);
         
         % FR control
-        data = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_fr.mat']);
-        met(i, 7+2*(m-1)) = data.(fieldnames{m})(2, 2);
-        met(i, 8+2*(m-1)) = data.(fieldnames{m})(2, 1);
+        data = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_lowFR_cv10.mat']);
+        met(i, 7+2*(m-1)) = nanmean(data.(fieldnames{m})(2, :), 2);
+        data = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_highFR_cv10.mat']);
+        met(i, 8+2*(m-1)) = nanmean(data.(fieldnames{m})(2, :), 2);
     end
 end
 
-save([mypath 'Katsuhisa/serotonin_project/LFP_project/Data/c2s/met.mat'], 'met')
+% save([mypath 'Katsuhisa/serotonin_project/LFP_project/Data/c2s/met.mat'], 'met')
+save([mypath 'Katsuhisa/serotonin_project/LFP_project/Data/c2s/met_cv10.mat'], 'met')

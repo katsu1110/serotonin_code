@@ -35,24 +35,30 @@ while start + movebin < length(prep{1}.calcium)
         clf
         plot(x, prep{1}.calcium(range), '-', 'color', cols{1})
         hold on;
-        for i = 1:length(yorig)
-            if yorig(i)==1
-                plot(x(i)*[1 1], [-1 -0.8], '-', 'color', cols{1})
-                hold on;
-            end
-        end
-        for i = 1:length(ypred)
-%             if ypred(i) > 0.5
-            if poissrnd(ypred(i)) >= 1
-                plot(x(i)*[1 1], [-1.5 -1.3], '-', 'color', cols{2})
-                hold on;
-            end
-        end
-        ypred = 0.5*ypred/max(ypred);
-        plot(x, ypred -2.3, '-', 'color', cols{2})
+        yorig = yorig/max(yorig);
+        plot(x, yorig -2, '-', 'color', cols{1})
+%         for i = 1:length(yorig)
+%             if yorig(i)==1
+%                 plot(x(i)*[1 1], [-1 -0.8], '-', 'color', cols{1})
+%                 hold on;
+%             end
+%         end
+%         for i = 1:length(ypred)
+% %             if ypred(i) > 0.5
+%             if poissrnd(ypred(i)) >= 1
+%                 plot(x(i)*[1 1], [-1.5 -1.3], '-', 'color', cols{2})
+%                 hold on;
+%             end
+%         end
+        ypred = ypred/max(ypred);
+        plot(x, ypred -3.2, '-', 'color', cols{2})
         set(gca, 'box', 'off', 'tickdir', 'out')
         xlim([x(1) x(end)])
         axis off
     end
     start = start + movebin;
 end
+text(-40, 0, 'LFP', 'fontsize', 6, 'color', cols{1})
+text(-40, -2, 'original spike rate', 'fontsize', 6, 'color', cols{1})
+text(-40, -3, 'predicted spike rate', 'fontsize', 6, 'color', cols{2})
+xlim([-40 x(end)])

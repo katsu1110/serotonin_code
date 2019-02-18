@@ -3,8 +3,9 @@ function fix_dim_data
 mypath = 'Z:\Katsuhisa\serotonin_project\LFP_project\Data\c2s\data';
 
 listings = dir(mypath);
+listings = listings(3:end);
 for i = 1:length(listings)
-    try
+%     try
         load([listings(i).folder '/' listings(i).name '/data.mat'])
         cell_num = ones(1, length(data));
         for j = 1:length(data)
@@ -13,36 +14,65 @@ for i = 1:length(listings)
         end
         uni = unique(cell_num);
         
-        % baseline
-        data_base = data(cell_num==uni(1));
-        [data_base, data1, data2] = split_traintest(data_base);        
-        data_drug = data(cell_num==uni(2));
-        data = data_base;
-        data = data2vec(data);
-        save([listings(i).folder '/' listings(i).name '/data_base.mat'], 'data')
+%         % KK's initial analysis
+%         % ==========================================================
+%         % baseline
+%         data_base = data(cell_num==uni(1));
+%         [data_base, data1, data2] = split_traintest(data_base);        
+%         data_drug = data(cell_num==uni(2));
+%         data = data_base;
+%         data = data2vec(data);
+%         save([listings(i).folder '/' listings(i).name '/data_base.mat'], 'data')
+%         
+%         % baseline 1 + drug
+%         data = data_concatenate(data1, data_drug);
+%         data = data2vec(data);
+%         save([listings(i).folder '/' listings(i).name '/data_train.mat'], 'data')
+%         
+%         % baseline 2 + drug
+%         data = data_concatenate(data2, data_drug);
+%         data = data2vec(data);
+%         save([listings(i).folder '/' listings(i).name '/data_test.mat'], 'data')
+%         
+%         % FR control
+%         data_fr = split_traintest(data_base, 'FRcontrol');
+%         data = data2vec(data_fr);
+%         save([listings(i).folder '/' listings(i).name '/data_fr.mat'], 'data')
+%         
+%         % =============================================================
         
-        % baseline 1 + drug
-        data = data_concatenate(data1, data_drug);
-        data = data2vec(data);
-        save([listings(i).folder '/' listings(i).name '/data_train.mat'], 'data')
+        % what HN thinks good
+        % ==========================================================
+        data_ori = data;
         
-        % baseline 2 + drug
-        data = data_concatenate(data2, data_drug);
-        data = data2vec(data);
-        save([listings(i).folder '/' listings(i).name '/data_test.mat'], 'data')
+        % baseline 
+        data_base = data_ori(cell_num==uni(1));
+        data_base = split_traintest(data_base, 'random', 10);        
+        data = data2vec(data_base);
+        save([listings(i).folder '/' listings(i).name '/data_base_cv10.mat'], 'data')
         
+        % drug
+        data_drug = data_ori(cell_num==uni(2));
+        data_drug = split_traintest(data_drug, 'random', 10);        
+        data = data2vec(data_drug);
+        save([listings(i).folder '/' listings(i).name '/data_drug_cv10.mat'], 'data')
+                        
         % FR control
-        data_fr = split_traintest(data_base, 'FRcontrol');
-        data = data2vec(data_fr);
-        save([listings(i).folder '/' listings(i).name '/data_fr.mat'], 'data')
+        [~, data1, data2] = split_traintest(data_base, 'FRcontrol');
+        data1 = split_traintest(data1, 'random', 10);
+        data = data2vec(data1);
+        save([listings(i).folder '/' listings(i).name '/data_lowFR_cv10.mat'], 'data')
+        data2 = split_traintest(data2, 'random', 10);
+        data = data2vec(data2);
+        save([listings(i).folder '/' listings(i).name '/data_highFR_cv10.mat'], 'data')
         
-%         data = data_drug;
-%         save([listings(i).folder '/' listings(i).name '/data_drug.mat'], 'data')
-%         save([listings(i).folder '/' listings(i).name '/data.mat'], 'data')
+        % =============================================================
+        
         disp([listings(i).folder '/' listings(i).name ' fixed and saved!'])
-    catch
-        continue
-    end
+%     catch
+%         disp([listings(i).folder '/' listings(i).name ' ERR!'])
+%         continue
+%     end
 end
 
 function data = data2vec(olddata)
@@ -90,13 +120,14 @@ for i = 1:len2
     c = c + 1;
 end
 
-function [data, data1, data2] = split_traintest(data, splittype)
+function [data, data1, data2] = split_traintest(data, splittype, n_split)
 if nargin < 2; splittype = 'random'; end
+if nargin < 3; n_split = 2; end
 lend = length(data);
 switch splittype
     case 'random'
         rng(19891220);
-        idx = randi(2, 1, lend);
+        idx = randi(n_split, 1, lend);
         for i = 1:lend
             data{i}.cell_num = idx(i);
         end

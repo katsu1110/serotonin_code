@@ -9,7 +9,8 @@ else
     mypath = '/gpfs01/nienborg/group/';
 end
 
-load([mypath 'Katsuhisa/serotonin_project/LFP_project/Data/c2s/met.mat'])
+% load([mypath 'Katsuhisa/serotonin_project/LFP_project/Data/c2s/met.mat'])
+load([mypath 'Katsuhisa/serotonin_project/LFP_project/Data/c2s/met_cv10.mat'])
 
 metrics = {'correlations', 'info'};
 metricnames = {'correlation', 'MI'};
