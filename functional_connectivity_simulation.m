@@ -50,8 +50,14 @@ metrics(:, 1:2) = metrics(:, 1:2)./cv;
 
 close all;
 figure;
-plot(metrics(:, 1), metrics(:, 3), 'o', 'color', 'c')
-hold on;
-plot(metrics(:, 2), metrics(:, 3), 'o', 'color', 'm')
+plot(metrics(:, 1), metrics(:, 2), 'o', 'color', 'k')
 set(gca, 'box', 'off', 'tickdir', 'out')
+xx = get(gca, 'XLim');
+yy = get(gca, 'YLim');
+range = [min([xx, yy]), max([xx, yy])];
+hold on;
+plot(range, range, '-', 'color', 0.5*ones(1, 3))
+axis([range range])
+xlabel({'\Delta corr', 'fit separately'})
+ylabel({'\Delta corr', 'train on base, test on drug'})
 
