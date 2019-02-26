@@ -29,9 +29,14 @@ for d = 1:ndrug
         ls_scatter(mat(mat(:,3)==d-1, 1), mat(mat(:,3)==d-1, 2), ...
             mat(mat(:,3)==d-1, 4))
     end
-    xlabel(varname1)
-    ylabel(varname2)
     title(drugnames{d})
+    if length(drugnames) > 1
+        xlabel(varname1)
+        ylabel(varname2)
+    else
+        xlabel([varname1(1:end-4) ' (high FR)'])
+        ylabel([varname2(1:end-4) ' (low FR)'])
+    end
 end
 set(gcf, 'position', [282   340   560   225])
 set(gcf, 'Name', [varname1 ' vs ' varname2], 'NumberTitle', 'off')

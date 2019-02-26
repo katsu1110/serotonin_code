@@ -738,7 +738,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'sta'))==1
                     (:, pow_analysiswnd), 2);
                 nspk(i, d) = datast{i}.cond(d).sta.nspk(stmidx(i, s)); 
             end
-            staim(i, :, :) = datast{i}.cond(1).sta.p{stmidx(i, s)} - datast{i}.cond(2).sta.p{stmidx(i, s)};
+            staim(i, :, :) = (datast{i}.cond(1).sta.p{stmidx(i, s)} - datast{i}.cond(2).sta.p{stmidx(i, s)}).*sum(nspk(i,:));
         end
 
         % visualize
@@ -757,8 +757,9 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'sta'))==1
                     nans = any(isnan(mat), 2);
         %             disp([num2str(sum(nans==1)) '/' num2str(length(nans))])
                     mat = mat(nans==0, :);
-                    me = mean(mat, 1);
-                    sem = std(mat, [], 1)/sqrt(sum(nans==0));
+                    [me, sem] = weighted(mat, nspk(cond, d));
+%                     me = mean(mat, 1);
+%                     sem = std(mat, [], 1)/sqrt(sum(nans==0));
                     fill_between(sta_t, me - sem, me + sem, cols(d, :), 0.1)
                     hold on;
                     plot(sta_t, me, '-', 'color', cols(d, :))
@@ -821,11 +822,12 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'sta'))==1
 
                 % delta PSD
                 subplot(lena*ndrug, 4*ss, 4 + 4*(s - 1) + 4*ss*(k-1)+ ndrug*4*ss*(a-1))
-                m = squeeze(nanmean(staim(cond, :, :), 1));
+                m = squeeze(nansum(staim(cond, :, :), 1))./sum(sum(nspk(cond, :)));
                 frange = freq >= 3 & freq <= 48;
                 imgt = linspace(-0.5, 0.5, size(m, 2));
                 trange = imgt >= xrange(1) & imgt <= xrange(2);
-                imagesc(imgt(trange), freq(frange), m(frange, trange))
+                ff = freq(frange);
+                imagesc(imgt(trange), ff, m(frange, trange));
                 colormap(jet)
                 hold on;
                 cc(c+1, :) = caxis;
@@ -933,11 +935,13 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
 %     step = 3:1:48; % Hz
     for s = 1:ss
         % data extraction
+        ntr = zeros(lenses, 2);
         power = zeros(lenses, length(freq), 2);
         delta = zeros(lenses, length(freq), 2);
         Sall = zeros(lenses, lenf, lent, 2);
         for i = 1:lenses
             for d = 1:2
+                ntr(i, d) = size(datast{i}.cond(d).mat{1}, 1);
                 sz = size(datast{i}.cond(d).spectrogram.S{stmidx(i, s)});
                 if sz(2) > sz(1)
 %                     S = 10*log10(datast{i}.cond(d).spectrogram.S{stmidx(i, s)});
@@ -950,7 +954,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
                     S = imresize(S, [lenf, lent]);
 %                     Sres = S - repmat(nanmean(S(:, spe_t < 0), 2), 1, lent);
 %                     Sall(i, :, :, d) = Sres(:, end - length(spe_t)+1:end);
-                    Sall(i, :, :, d) = S(:, end - length(spe_t)+1:end);                    
+                    Sall(i, :, :, d) = S(:, end - length(spe_t)+1:end).*ntr(i, d);                    
                 end
                 Sabs = nanmean(S(:, spe_t > datast{end}.window{end}(1)), 2);
                 power(i, :, d) = Sabs;
@@ -983,8 +987,9 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
                 nans = unique(nans);
                 for d = 1:2        
                     mat{d}(nans, :) = [];
-                    me = mean(mat{d}, 1);
-                    sem = std(mat{d}, [], 1)/sqrt(lenses - length(nans));
+                    [me, sem] = weighted(mat{d}, ntr(cond, d));
+%                     me = mean(mat{d}, 1);
+%                     sem = std(mat{d}, [], 1)/sqrt(lenses - length(nans));
                     fill_between(freq, me - sem, me + sem, cols(d, :), 0.4)
                     hold on;
                     plot(freq, me, '-', 'color', cols(d, :))
@@ -1071,8 +1076,9 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
                 nans = unique(nans);
                 for d = 1:2
                     mat{d}(nans, :) = [];
-                    me = mean(mat{d}, 1);
-                    sem = std(mat{d}, [], 1)/sqrt(lenses - length(nans));
+                    [me, sem] = weighted(mat{d}, ntr(cond, d));
+%                     me = mean(mat{d}, 1);
+%                     sem = std(mat{d}, [], 1)/sqrt(lenses - length(nans));
                     fill_between(freq, me - sem, me + sem, cols(d, :), 0.1)
                     hold on;
                     plot(freq, me, '-', 'color', cols(d, :))
@@ -1123,7 +1129,10 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
                 clim = {zeros(1, 2), zeros(1, 2)};
                 for d = 1:2
                     subplot(lena*ndrug, 3, d + 3*(k-1) + ndrug*3*(a-1))
-                    imagesc(spe_t, freq, squeeze(nanmean(Sall(cond, :, :, d), 1)));
+%                     imagesc(spe_t, freq, squeeze(nanmean(Sall(cond, :, :, d), 1)));
+                    h = pcolor(spe_t, freq, squeeze(nansum(Sall(cond, :, :, d), 1))./sum(ntr(cond, d)));
+                    h.EdgeColor = 'none';
+%                     set(gca, 'YScale', 'log')
                     colormap(jet);
                     cl = caxis;
                     if cl(1) < clim{1}(1)
@@ -1138,17 +1147,20 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
                 end        
 
                 subplot(lena*ndrug, 3, 3 + 3*(k-1) + ndrug*3*(a-1))
-                S1 = squeeze(nanmean(Sall(cond, :, :, 1), 1));
+                S1 = squeeze(nansum(Sall(cond, :, :, 1), 1)./sum(ntr(cond, 1)));
 %                 S1 = S1 - repmat(nanmean(S1(:, spe_t <= 0), 2), 1, length(spe_t));
-                S2 = squeeze(nanmean(Sall(cond, :, :, 2), 1));
+                S2 = squeeze(nansum(Sall(cond, :, :, 2), 1)./sum(ntr(cond, 2)));
 %                 S2 = S2 - repmat(nanmean(S2(:, spe_t <= 0), 2), 1, length(spe_t));
-                imagesc(spe_t, freq, S1 - S2);
+%                 imagesc(spe_t, freq, S1 - S2);
+                h = pcolor(spe_t, freq, S1 - S2);
+                h.EdgeColor = 'none';
+%                 set(gca, 'YScale', 'log')
                 colormap(jet)
                 cl = caxis;
-                if cl(1) < clim{2}
+                if cl(1) < clim{2}(1)
                     clim{2}(1) = cl(1);
                 end
-                if cl(2) > clim{2}
+                if cl(2) > clim{2}(2)
                     clim{2}(2) = cl(2);
                 end
                 ylim([3 48])
@@ -1178,6 +1190,7 @@ if sum(contains(analysis, 'all'))==1 || sum(contains(analysis, 'spectrogram'))==
         end
         
         % format 
+        disp(['clim ' num2str(clim{2})])
         for k = 1:lena*ndrug*3
             figure(j + 1 + s);
             subplot(lena*ndrug, 3, k)

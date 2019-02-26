@@ -51,7 +51,7 @@ while start + movebin < length(prep{1}.calcium)
 %             end
 %         end
         ypred = ypred/max(ypred);
-        plot(x, ypred -3.2, '-', 'color', cols{2})
+        plot(x, ypred -2, '-', 'color', cols{2})
         set(gca, 'box', 'off', 'tickdir', 'out')
         xlim([x(1) x(end)])
         axis off
