@@ -162,7 +162,8 @@ varnames = {'fr base', 'fr drug', 'r rate', ...
     'phase gamma base', 'phase gamma drug', 'd phase gamma','phase low-freq base', 'phase low-freq drug', 'd phase low-freq',...
     'phase broadband base', 'phase broadband drug', 'd phase broadband', ...
     'lfp signal base', 'lfp signal drug', 'd lfp signal', 'lfppow ratio base', 'lfppow ratio drug', 'd lfppow ratio', ...
-    'low-freq ps weight', 'low-freq dps weight', 'low-freq drug weight', 'low-freq drugxps weight', 'low-freq drugxdps weight'};
+    'low-freq ps weight', 'low-freq dps weight', 'low-freq drug weight', 'low-freq drugxps weight', 'low-freq drugxdps weight',...
+    'ntr base', 'ntr drug'};
 
 lenv = length(varnames);
 
@@ -334,6 +335,10 @@ for i = 1:lenses
                 at(i, 88 + (k-1), s) = beta(k); 
             end
         end
+        
+        % the number of trials
+        at(i, 93, s) = ntr0;
+        at(i, 94, s) = ntr2;
     end    
 end
 % fillnan

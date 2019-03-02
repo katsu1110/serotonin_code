@@ -41,9 +41,9 @@ for k = 1:lenm % metric
     end
     % FR control
     subplot(lenm, 3, 3+3*(k-1))
-    x = met(met(:, 2)==d-1, 7+2*(k-1));
-    y = met(met(:, 2)==d-1, 8+2*(k-1));
-    z = met(met(:, 2)==d-1, 1);
+    x = met(:, 7+2*(k-1));
+    y = met(:, 8+2*(k-1));
+    z = met(:, 1);
     unity_scatter(x, y, z)
     hold on;
     if k==1

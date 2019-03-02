@@ -703,5 +703,8 @@ for i = 1:sz(1)
 end
 
 function tlab = fname2title(fname)
-dotpos = strfind(fname, '.');
-tlab = [fname(1:3) fname(dotpos(end-1)+1:dotpos(end)-1)];
+% dotpos = strfind(fname, '.');
+% tlab = [fname(1:3) fname(dotpos(end-1)+1:dotpos(end)-1)];
+sti = strfind(fname, '_');
+dots = strfind(fname, '.');
+tlab = [fname(1:sti(2)-1) ':' fname(sti(end)+1:dots(end)-1)];
