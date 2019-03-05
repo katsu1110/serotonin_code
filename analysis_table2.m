@@ -347,6 +347,22 @@ for i = 1:size(at, 2)
     at(nans, i) = nanmedian(at(:, i));
 end
 
+% model performance (decoding)
+try    
+    load([mypath '/Katsuhisa/serotonin_project/LFP_project/Data/c2s/met_cv10.mat'])
+    if strcmp(splittype, 'drug')
+        idx = [3, 4];
+    else
+        idx = [7, 8];
+    end
+    at = [at, met(:, idx), met(:, idx(1))-met(:,idx(2))];
+    varnames{lenv+1} = 'mprf base';
+    varnames{lenv+2} = 'mprf drug';
+    varnames{lenv+3} = 'd mprf';
+catch
+    disp('No model performance added')
+end
+
 % autosave
 anaT.table = at;
 anaT.varnames = varnames;
