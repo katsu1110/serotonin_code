@@ -14,7 +14,9 @@ delnames = {'auroc.mat', 'correlation.mat', 'correlation_base.mat', ...
     'data_drug.pck', 'data_drug.pickle', 'data_test', 'data_test.pck', 'data_test.pickle', ...
     'data_train.pck', 'data_train.pickle', 'MI.mat', 'MI_base.mat', 'MI_fr.mat', 'MI_test.mat', ...
     'MI_train.mat', 'predictions.mat', 'preprocessed.mat', 'preprocessed_base.mat', ...
-    'preprocessed_fr.mat', 'preprocessed_test.mat', 'preprocessed_train.mat', 'stlfp0.mat', 'stlfp1.mat'};
+    'preprocessed_fr.mat', 'preprocessed_test.mat', 'preprocessed_train.mat', 'stlfp0.mat', 'stlfp1.mat', ...
+    'data_train.mat', 'data_test.mat', 'predicted_train.mat', 'predicted_test.mat', 'predicted_train2.mat', 'predicted_test2.mat', ...
+    'preprocessed2_train.mat', 'preprocessed2_test.mat'};
 for i = 1:length(listings)
     % save as csv
     for f = 1:4
@@ -30,7 +32,7 @@ for i = 1:length(listings)
             spk(1:lens(k), k) = data{k}.spikes;
         end
         dlmwrite([listings(i).folder '/' listings(i).name '/lfp' fnames{f}(13:end) '.csv'], lfp, 'delimiter', ',', 'precision', 9)
-        dlmwrite([listings(i).folder '/' listings(i).name '/spk' fnames{f}(13:end) '.csv'], lfp, 'delimiter', ',', 'precision', 9)
+        dlmwrite([listings(i).folder '/' listings(i).name '/spk' fnames{f}(13:end) '.csv'], spk, 'delimiter', ',', 'precision', 9)
     end
     disp([listings(i).folder '/' listings(i).name ' ... csv saved!'])
     
