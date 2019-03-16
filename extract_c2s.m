@@ -51,19 +51,26 @@ for i = 1:length(dirs)
         
         % baseline
         data = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_base_cv10.mat']);
-        met(i, 3+2*(m-1)) = nanmean(data.(fieldnames{m})(2, :), 2);
+        met(i, 3+2*(m-1)) = model_perf(data, 1, fieldnames{m});
         
         % drug
         data = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_drug_cv10.mat']);
-        met(i, 4+2*(m-1)) = nanmean(data.(fieldnames{m})(2, :), 2);
+        met(i, 4+2*(m-1)) = model_perf(data, 1, fieldnames{m});
         
         % FR control
         data = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_lowFR_cv10.mat']);
-        met(i, 7+2*(m-1)) = nanmean(data.(fieldnames{m})(2, :), 2);
+        met(i, 7+2*(m-1)) = model_perf(data, 1, fieldnames{m});
         data = load([dirs(i).folder '/' dirs(i).name '/' mfnames{m} '_highFR_cv10.mat']);
-        met(i, 8+2*(m-1)) = nanmean(data.(fieldnames{m})(2, :), 2);
+        met(i, 8+2*(m-1)) = model_perf(data, 1, fieldnames{m});
     end
 end
 
 % save([mypath 'Katsuhisa/serotonin_project/LFP_project/Data/c2s/met.mat'], 'met')
 save([mypath 'Katsuhisa/serotonin_project/LFP_project/Data/c2s/met_cv10.mat'], 'met')
+
+function mpf = model_perf(data, row, name)
+if strcmp(name, 'info')
+    mpf = nanmean(data.info(row, :)./data.entropy(row, :), 2);
+else
+    mpf = nanmean(data.(name)(row, :), 2);
+end
